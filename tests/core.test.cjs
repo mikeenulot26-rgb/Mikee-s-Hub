@@ -1,0 +1,12 @@
+const assert=require('node:assert/strict');
+const {rect,enhance,zip,crc32}=require('../core.js');
+assert.deepEqual(rect(1600,1200,800,600,'contain'),[0,0,800,600]);
+assert.deepEqual(rect(1200,1600,800,600,'contain'),[175,0,450,600]);
+const crop=rect(1200,1600,800,600,'cover',0,1);
+assert.equal(crop[0],0);assert.equal(crop[2],800);assert.ok(crop[1]<0);
+assert.ok(crop[3]>600);
+const data=new Uint8ClampedArray([80,100,120,255]);
+enhance(data,'original',100);assert.deepEqual(Array.from(data),[80,100,120,255]);
+enhance(data,'bright',100);assert.equal(data[3],255);assert.ok(data[0]>80);
+assert.equal(crc32(new TextEncoder().encode('123456789')),0xcbf43926);
+(async()=>{const b=await zip([{name:'CW_01.jpg',blob:new Blob(['test'])}]);const bytes=new Uint8Array(await b.arrayBuffer());const v=new DataView(bytes.buffer);assert.equal(v.getUint32(0,true),0x04034b50);assert.equal(v.getUint32(bytes.length-22,true),0x06054b50);assert.equal(v.getUint16(bytes.length-14,true),1);console.log('Core checks passed.');})();
