@@ -1,4 +1,4 @@
-# SECOND BRAIN — Croswell Marketing Studio
+# Mikee’s Hub — Personal Workspace
 
 First incremental release: a marketing studio with Supabase private cloud integration. Owner allowlist provisioning and browser login testing are still pending. No paid AI, no external photo uploads, and no invented property records.
 
