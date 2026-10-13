@@ -87,5 +87,11 @@ $('profile').onclick=()=>{
   try{state.profileName=value;state.profilePhoto=draft;await hubSave();$('utilityDialog').close();toast('Your profile is updated.')}catch(e){state.profileName=previousName;state.profilePhoto=previousPhoto;renderHub();toast(e.message)}finally{save.disabled=false}
  };
  form.append(nameLabel,preview,photoLabel,hint,controls);$('utilityBody').append(form);
+ const security=document.createElement('details'),summary=el('summary','','Change password'),passwordForm=el('form'),newLabel=el('label','','New password'),newInput=el('input'),confirmLabel=el('label','','Confirm new password'),confirmInput=el('input');
+ for(const input of [newInput,confirmInput]){input.type='password';input.minLength=12;input.maxLength=128;input.required=true;input.autocomplete='new-password'}
+ newLabel.append(newInput);confirmLabel.append(confirmInput);const change=el('button','primary','Update password');change.type='submit';passwordForm.append(newLabel,confirmLabel,change);
+ passwordForm.onsubmit=async event=>{event.preventDefault();if(newInput.value!==confirmInput.value){toast('The passwords do not match.');return}change.disabled=true;try{await Cloud.changePassword(newInput.value);passwordForm.reset();security.open=false;toast('Password updated. Use your new password next time you sign in.')}catch(e){toast(e.message)}finally{change.disabled=false}};
+ security.append(summary,passwordForm);$('utilityBody').append(security);
+
 };
 
