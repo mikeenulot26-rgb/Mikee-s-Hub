@@ -1,0 +1,18 @@
+{
+  "id": "/",
+  "name": "Mikee’s Hub",
+  "short_name": "Mikee’s Hub",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "background_color": "#151e2e",
+  "theme_color": "#4d7cff",
+  "icons": [
+    {
+      "src": "hub-icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any"
+    }
+  ]
+}
