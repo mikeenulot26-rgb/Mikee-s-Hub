@@ -136,3 +136,9 @@ html[data-theme=dark] .scheduleblock.pastel1{background:#24483e!important}
 html[data-theme=dark] .scheduleblock.pastel2{background:#403355!important}
 .scheduleblock:hover{filter:brightness(.98)}
 html[data-theme=dark] .scheduleblock:hover{filter:brightness(1.1)}
+
+/* Projects removed from the visible workspace. */
+.referencegrid>.managementcard{grid-column:1/-1}
+.productivity{gap:26px}
+@media(max-width:700px){.productivity{grid-template-columns:repeat(3,minmax(0,1fr));gap:12px}}
+@media(max-width:420px){.productivity{grid-template-columns:repeat(3,minmax(0,1fr));gap:8px}}
