@@ -96,3 +96,16 @@ html[data-theme=dark] .taskrow,html[data-theme=dark] .referencegrid>.panel{borde
 html[data-theme=dark] .pastel0{background:#293c65}html[data-theme=dark] .pastel1{background:#2b4546}html[data-theme=dark] .pastel2{background:#44355e}
 html[data-theme=dark] .scheduleblock,html[data-theme=dark] .scheduleblock small{color:#edf2fc}
 html[data-theme=dark] .dropzone{background:#243047;border-color:#5a6d8b}
+
+/* More prominent primary navigation */
+.topnav{padding-top:26px;padding-bottom:20px}
+.topnav .nav,.modulemenu>summary{font-size:16px;font-weight:700}
+.brandnav b{font-size:18px}
+.brandicon{width:42px;height:42px}
+.navtools>.iconbtn{width:40px;height:40px}
+.navtools>.avatar{width:42px;height:42px}
+#globalSearch{font-size:15px}
+.profile-editor-photo{display:block;width:112px;height:112px;object-fit:cover;border-radius:50%;margin:16px 0}
+.profile-editor{max-width:430px}
+@media(max-width:700px){.topnav .nav,.modulemenu>summary{font-size:15px}.navlinks{gap:16px}.topnav{padding-top:20px;padding-bottom:16px}.brandnav b{font-size:17px}}
+
