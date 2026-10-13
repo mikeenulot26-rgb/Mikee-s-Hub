@@ -1,67 +1,46 @@
 'use strict';
-let insightView='focus',insightFilter='all',insightVersion=0;
-function buildInsightModel(h,properties,today){
- const open=h.tasks.filter(t=>!t.done),end=dateShift(today,6);
- const rank=t=>t.due&&t.due<today?0:t.due===today?1:t.priority==='High'?2:t.due?3:4;
- const focus=[...open].sort((a,b)=>rank(a)-rank(b)||(a.due||'9999').localeCompare(b.due||'9999')||(a.time||'99').localeCompare(b.time||'99'));
- const week=[...open.filter(t=>t.due&&t.due>=today&&t.due<=end).map(t=>({kind:'task',when:t.due+'T'+(t.time||'99:99'),item:t})),...h.events.filter(e=>e.when&&e.when.slice(0,10)>=today&&e.when.slice(0,10)<=end).map(e=>({kind:'event',when:e.when,item:e}))].sort((a,b)=>a.when.localeCompare(b.when));
- return{open,focus,week,overdue:open.filter(t=>t.due&&t.due<today),due:open.filter(t=>t.due===today),events:h.events.filter(e=>e.when?.startsWith(today)),notes:[...h.notes].sort((a,b)=>String(b.created).localeCompare(String(a.created))),properties};
+let reviewPeriod='week',reviewAnchor='',reviewModel;
+function reviewDay(value){if(!value)return '';const date=new Date(value);return Number.isNaN(date.getTime())?'':new Intl.DateTimeFormat('en-CA',{timeZone:'Asia/Dubai',year:'numeric',month:'2-digit',day:'2-digit'}).format(date)}
+function reviewBounds(anchor,period){const d=new Date(anchor+'T12:00:00Z');if(period==='week'){const start=dateShift(anchor,-((d.getUTCDay()+6)%7));return {start,end:dateShift(start,6)}}const start=anchor.slice(0,7)+'-01',end=new Date(Date.UTC(d.getUTCFullYear(),d.getUTCMonth()+1,0,12)).toISOString().slice(0,10);return {start,end}}
+function reviewShift(anchor,period,n){if(period==='week')return dateShift(anchor,n*7);const d=new Date(anchor+'T12:00:00Z');return new Date(Date.UTC(d.getUTCFullYear(),d.getUTCMonth()+n,1,12)).toISOString().slice(0,10)}
+function buildProductivityModel(h,properties,today,anchor,period){
+ const bounds=reviewBounds(anchor,period),prev=reviewBounds(reviewShift(bounds.start,period,-1),period),inside=(day,b=bounds)=>!!day&&day>=b.start&&day<=b.end;
+ const tasks=h.tasks||[],completed=tasks.filter(t=>t.done&&inside(reviewDay(t.completedAt))).sort((a,b)=>String(b.completedAt).localeCompare(String(a.completedAt)));
+ const due=tasks.filter(t=>inside(t.due)),dueDone=due.filter(t=>t.done),notes=(h.notes||[]).filter(n=>inside(reviewDay(n.created))),added=properties.filter(p=>inside(reviewDay(p.created))),events=(h.events||[]).filter(e=>inside((e.when||'').slice(0,10)));
+ const overdue=tasks.filter(t=>!t.done&&t.due&&t.due<today&&inside(t.due)),undated=tasks.filter(t=>!t.done&&!t.due);
+ const onTime=completed.filter(t=>t.completedDue&&reviewDay(t.completedAt)<=t.completedDue),dated=completed.filter(t=>t.completedDue),categories={};
+ completed.forEach(t=>{const key=t.category||'Personal';categories[key]=(categories[key]||0)+1});
+ const days=[];for(let day=bounds.start;day<=bounds.end;day=dateShift(day,1))days.push({date:day,count:completed.filter(t=>reviewDay(t.completedAt)===day).length});
+ const elapsed=Math.min(days.length,Math.max(0,Math.floor((new Date(today+'T12:00Z')-new Date(bounds.start+'T12:00Z'))/86400000)+1));
+ const previousEnd=period==='month'&&elapsed===days.length?prev.end:[dateShift(prev.start,Math.max(0,elapsed-1)),prev.end].sort()[0],previous=tasks.filter(t=>t.done&&inside(reviewDay(t.completedAt),{start:prev.start,end:previousEnd})).length;
+ return {...bounds,completed,due,dueDone,notes,added,events,overdue,undated,onTime,dated,categories,days,previous,elapsed,legacy:tasks.filter(t=>t.done&&!reviewDay(t.completedAt)).length};
 }
-function insightTaskReason(t,today){if(t.due&&t.due<today)return 'Overdue · '+t.due;if(t.due===today)return 'Due today'+(t.time?' · '+t.time:'');if(t.priority==='High')return 'High priority'+(t.due?' · '+t.due:' · no date');return t.due?'Due '+t.due+(t.time?' · '+t.time:''):'No due date — schedule when ready'}
-async function moveInsightTask(t){
- const before={due:t.due,status:t.status};t.due=dateShift(dubaiDate(),1);
- try{await hubSave();toast('Task moved to tomorrow.')}catch(e){t.due=before.due;t.status=before.status;renderHub();toast(e.message)}
-}
-function chooseInsightView(view,filter='all'){insightView=view;insightFilter=filter;document.querySelectorAll('[data-insight-view]').forEach(b=>{const active=b.dataset.insightView===view;b.classList.toggle('active',active);b.setAttribute('aria-pressed',String(active))});renderInsights().catch(e=>toast(e.message))}
-function insightItem(title,detail,actions=[],tag=''){
- const row=el('div','insight-item'),body=el('div','insight-item-body');body.append(el('strong','',title),el('p','muted',detail));if(tag)body.append(el('span','badge statusbadge',tag));const controls=el('div','insight-actions');controls.append(...actions);row.append(body,controls);return row;
-}
+function reviewLabel(day){return new Intl.DateTimeFormat('en-GB',{timeZone:'Asia/Dubai',day:'numeric',month:'short',year:'numeric'}).format(new Date(day+'T12:00Z'))}
+function reviewSuggestion(parent,title,detail,action){const row=el('div','review-suggestion');row.append(el('strong','',title),el('p','muted',detail));if(action)row.append(button(action.label,action.run));parent.append(row)}
 async function renderInsights(){
- if(!$('insightTabs')||$('insights').hidden)return;
- const version=++insightVersion,h=hubData(),today=dubaiDate(),model=buildInsightModel(h,state.properties,today),query=$('insightSearch').value.trim().toLowerCase(),matches=text=>String(text).toLowerCase().includes(query);
+ if(!$('reviewRange')||$('insights').hidden)return;
+ const today=dubaiDate();reviewAnchor ||= today;
+ const m=reviewModel=buildProductivityModel(hubData(),state.properties,today,reviewAnchor,reviewPeriod),current=reviewBounds(today,reviewPeriod),live=m.start===current.start,q=$('insightSearch').value.trim().toLowerCase();
+ $('reviewRange').textContent=reviewLabel(m.start)+' – '+reviewLabel(m.end);
+ $('reviewNext').disabled=m.start>=current.start;
+ document.querySelectorAll('[data-review-period]').forEach(b=>{const active=b.dataset.reviewPeriod===reviewPeriod;b.classList.toggle('active',active);b.setAttribute('aria-pressed',String(active));b.textContent=b.dataset.reviewPeriod==='week'?(live?'This week':'Weekly'):(live?'This month':'Monthly')});
+ $('insightBrief').textContent=m.completed.length+' task'+(m.completed.length===1?'':'s')+' completed'+(live?' so far':'')+'. '+(m.completed.length>m.previous?'Up '+(m.completed.length-m.previous):m.completed.length<m.previous?'Down '+(m.previous-m.completed.length):'Same completion count')+' compared with '+(live?'the same number of days in the previous ':'the previous ')+reviewPeriod+'.';
  const summary=$('insightSummary');summary.replaceChildren();
- const cards=[['Overdue tasks',model.overdue.length,'focus','overdue'],['Due today',model.due.length,'focus','today'],['Next 7 days',model.week.length,'week'],['Saved properties',model.properties.length,'marketing']];
- for(const[label,count,view,filter]of cards){const b=el('button','insight-stat');b.append(el('span','',label),el('strong','',count));b.onclick=()=>chooseInsightView(view,filter);summary.append(b)}
- $('insightBrief').textContent=model.overdue.length?model.overdue.length+' overdue task'+(model.overdue.length===1?'':'s')+' first, then '+model.due.length+' due today.':model.due.length?model.due.length+' task'+(model.due.length===1?'':'s')+' due today. '+model.events.length+' event'+(model.events.length===1?'':'s')+' scheduled.':'No open tasks due today. Review your upcoming work or schedule an undated task.';
- const list=$('insightsList');list.replaceChildren();let shown=0;
- if(insightView==='focus'){
-  $('insightHeading').textContent=insightFilter==='overdue'?'Overdue tasks':insightFilter==='today'?'Tasks due today':'Your next actions';
-  const tasks=insightFilter==='overdue'?model.overdue:insightFilter==='today'?model.due:model.focus;
-  for(const t of tasks.filter(t=>matches(t.title+' '+(t.category||'')+' '+(t.assigned||'')))){
-   list.append(insightItem(t.title,insightTaskReason(t,today)+' · '+(t.category||'Personal'),[button('Open task',()=>editTask(t)),button('Move to tomorrow',()=>moveInsightTask(t))],t.priority||'Normal'));shown++;
-  }
- }else if(insightView==='week'){
-  $('insightHeading').textContent='Next seven days';
-  for(const entry of model.week.filter(e=>matches(e.item.title))){
-   list.append(insightItem(entry.item.title,(entry.kind==='task'?entry.item.due+' · '+(entry.item.time||'Any time'):entry.when.replace('T',' · '))+' · Dubai',[button(entry.kind==='task'?'Open task':'Open event',()=>entry.kind==='task'?editTask(entry.item):editEvent(entry.item))],entry.kind==='task'?'Task':'Event'));shown++;
-  }
- }else if(insightView==='marketing'){
-  $('insightHeading').textContent='Property marketing checks';
-  const all=await request(db.transaction('photos').objectStore('photos').getAll());if(version!==insightVersion||$('insights').hidden)return;
-  for(const p of model.properties.filter(p=>matches(p.name+' '+(p.community||'')))){
-   const media=all.filter(photo=>photo.property===p.id),missing=[];
-   if(!media.length)missing.push('Upload photos');if(!p.name||p.name==='Untitled photo batch')missing.push('Set property name');if(!p.community)missing.push('Add location');if(!p.price)missing.push('Add price');if(!p.beds)missing.push('Add bedrooms');if(!p.area)missing.push('Add area');if(!p.agent)missing.push('Select an agent');
-   const low=media.filter(photo=>photo.width<800||photo.height<600).length;
-   const details=[media.length+' photos',missing.length?'Suggested next steps: '+missing.join(', '):'Photo and property fields are filled in',low?low+' photo(s) below 800 × 600 — review quality':''].filter(Boolean).join(' · ');
-   list.append(insightItem(p.name,details,[button('Open Studio',async()=>{await selectProperty(p.id);page('studio')}),button('Property library',()=>page('properties'))],missing.length?'Review details':'Details complete'));shown++;
-  }
- }else{
-  $('insightHeading').textContent='Recent saved notes';
-  for(const n of model.notes.filter(n=>matches(n.body)).slice(0,12)){
-   const date=new Date(n.created),when=Number.isNaN(date.getTime())?'Saved note':new Intl.DateTimeFormat('en-GB',{dateStyle:'medium',timeZone:'Asia/Dubai'}).format(date);
-   list.append(insightItem(n.body.slice(0,150)+(n.body.length>150?'…':''),when,[button('Read note',()=>{page('notes');$('noteSearch').value=n.body.slice(0,60);renderHub()})]));shown++;
-  }
- }
- if(!shown)list.append(el('p','emptycompact',query?'No records match your search.':insightView==='marketing'?'No properties yet. Upload photos in Marketing Studio to start.':insightView==='week'?'No dated tasks or events in the next seven days.':insightView==='notes'?'No notes saved yet.':'No open tasks. Your task list is clear.'));
+ for(const [label,value,detail]of [['Tasks completed',m.completed.length,'Recorded completion dates'],['Due tasks finished',m.due.length?Math.round(m.dueDone.length/m.due.length*100)+'%':'—',m.dueDone.length+' of '+m.due.length+' tasks due in this period'],['Notes saved',m.notes.length,'Ideas and information captured'],['Properties added',m.added.length,'New property records saved']]){const card=el('div','insight-stat');card.append(el('span','',label),el('strong','',value),el('small','',detail));summary.append(card)}
+ const chart=$('reviewChart');chart.replaceChildren();const max=Math.max(1,...m.days.map(d=>d.count));for(const d of m.days){const col=el('div','review-bar-column'),bar=el('div','review-bar'),label=el('span','',d.date.slice(8));bar.style.height=(d.count?Math.max(4,d.count/max*110):2)+'px';col.title=reviewLabel(d.date)+': '+d.count+' completed';col.setAttribute('aria-label',col.title);col.append(el('strong','',d.count||''),bar,label);if(d.date>today)col.classList.add('future');chart.append(col)}chart.setAttribute('role','img');chart.setAttribute('aria-label','Daily completed tasks: '+m.days.map(d=>d.date+': '+d.count).join('; '));
+ const cats=$('reviewCategories');cats.replaceChildren();for(const [name,count]of Object.entries(m.categories).sort((a,b)=>b[1]-a[1])){const row=el('div','review-category'),progress=el('progress');progress.max=m.completed.length;progress.value=count;progress.setAttribute('aria-label',name+': '+count+' completed');row.append(el('strong','',name),el('span','',count),progress);cats.append(row)}hubEmpty(cats,'Complete tasks to see your activity by category.');
+ const wins=$('reviewWins');wins.replaceChildren();if(m.completed.length){const days=m.days.filter(d=>d.count).length;reviewSuggestion(wins,'You moved work forward',m.completed.length+' completed tasks across '+days+' active day'+(days===1?'':'s')+'.');if(m.dated.length)reviewSuggestion(wins,'Deadline follow-through',m.onTime.length+' of '+m.dated.length+' completed tasks with recorded deadlines finished on or before their due date.')}else reviewSuggestion(wins,'Your review is ready to grow','Tick off finished work in Task Management. New completions will appear here.');
+ if(m.notes.length)reviewSuggestion(wins,'You captured useful information',m.notes.length+' notes saved in this period.');if(m.added.length)reviewSuggestion(wins,'You built your property library',m.added.length+' properties added.');if(m.events.length)reviewSuggestion(wins,'Your calendar held '+m.events.length+' events','Scheduled events are shown as planning activity; attendance is not tracked.');
+ const improvements=$('reviewImprovements');improvements.replaceChildren();if(m.overdue.length)reviewSuggestion(improvements,'Clear unfinished deadlines',m.overdue.length+' unfinished tasks from this period are overdue. Review them and set realistic next steps.',{label:'Review tasks',run:()=>{page('tasks');$('taskFilter').value='open';renderHub()}});
+ if(m.dated.length>m.onTime.length)reviewSuggestion(improvements,'Give deadlines more breathing room',(m.dated.length-m.onTime.length)+' completed tasks finished after their recorded due date. Break the next similar task into smaller steps and schedule an earlier start.');
+ if(m.undated.length)reviewSuggestion(improvements,'Make your backlog easier to plan',m.undated.length+' currently open tasks have no due date. Give the important ones a date.',{label:'Plan tasks',run:()=>page('tasks')});
+ if(!improvements.childNodes.length)reviewSuggestion(improvements,'Choose one focus for the next '+reviewPeriod,'Review your task list, select your most important outcome, and reserve time for it.',{label:'Open Task Management',run:()=>page('tasks')});
+ const list=$('insightsList');list.replaceChildren();for(const t of m.completed.filter(t=>(t.title+' '+(t.category||'')).toLowerCase().includes(q))){const row=el('div','insight-item'),body=el('div','insight-item-body');body.append(el('strong','',t.title),el('p','muted',reviewLabel(reviewDay(t.completedAt))+' · '+(t.category||'Personal')));row.append(body,button('View task',()=>editTask(t)));list.append(row)}hubEmpty(list,q?'No completed tasks match your search.':'No tasks with recorded completion dates in this period.');
+ $('reviewMethod').textContent='Based on your saved records, using Dubai time and Monday–Sunday weeks. Completion dates are recorded from this update onward. '+(m.legacy?m.legacy+' older completed task(s) have no completion date and are excluded from dated totals. ':'')+'Deleted records are excluded. Due-task percentage uses tasks due in the selected period; it is not an overall productivity score. Suggestions come from your task data.';
 }
-async function copyInsightPlan(){
- const h=hubData(),today=dubaiDate(),model=buildInsightModel(h,state.properties,today);
- const lines=['My plan — '+today+' (Dubai)','',...model.overdue.map(t=>'OVERDUE: '+t.title+' ('+t.due+')'),...model.due.map(t=>(t.time||'Any time')+' · '+t.title),...model.events.map(e=>e.when.slice(11,16)+' · '+e.title)];
- if(lines.length===2)lines.push('No dated tasks or events today.');
- try{await navigator.clipboard.writeText(lines.join('\n'));toast('Today’s plan copied.')}catch{utility('Today’s plan',lines);toast('Clipboard unavailable. You can select and copy the plan here.')}
-}
-document.querySelectorAll('[data-insight-view]').forEach(b=>b.onclick=()=>chooseInsightView(b.dataset.insightView));
-let insightSearchTimer;$('insightSearch').oninput=()=>{clearTimeout(insightSearchTimer);insightSearchTimer=setTimeout(()=>renderInsights().catch(e=>toast(e.message)),120)};
-$('copyInsightPlan').onclick=copyInsightPlan;
-$('insightAddTask').onclick=()=>{$('quickTask').click()};
-$('insightAddEvent').onclick=()=>{$('newEvent').click();page('calendar');$('eventForm').elements.title.focus()};
+async function copyInsightPlan(){await renderInsights();if(!reviewModel)return;const m=reviewModel;const text=['My '+reviewPeriod+' review: '+m.start+' – '+m.end,m.completed.length+' tasks completed',m.dueDone.length+' / '+m.due.length+' due tasks finished',m.notes.length+' notes saved',m.added.length+' properties added','',...m.completed.map(t=>'✓ '+t.title),'','Improvements:',...Array.from($('reviewImprovements').querySelectorAll('strong,p')).map(e=>e.textContent)].join('\n');try{await navigator.clipboard.writeText(text);toast('Productivity summary copied.')}catch{utility('Productivity summary',text.split('\n'))}}
+document.querySelectorAll('[data-review-period]').forEach(b=>b.onclick=()=>{reviewPeriod=b.dataset.reviewPeriod;reviewAnchor=dubaiDate();renderInsights()});
+$('reviewPrev').onclick=()=>{reviewAnchor=reviewShift(reviewAnchor||dubaiDate(),reviewPeriod,-1);renderInsights()};
+$('reviewNext').onclick=()=>{reviewAnchor=reviewShift(reviewAnchor||dubaiDate(),reviewPeriod,1);renderInsights()};
+$('reviewCurrent').onclick=()=>{reviewAnchor=dubaiDate();renderInsights()};
+$('insightSearch').oninput=()=>renderInsights();$('copyInsightPlan').onclick=copyInsightPlan;
