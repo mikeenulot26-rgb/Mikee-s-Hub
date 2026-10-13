@@ -124,3 +124,15 @@ input,select,textarea,button,.filebutton{font-size:15px}
 @media(max-width:1300px){.productivity{gap:15px}.productivity>div{padding-left:12px}}
 @media(max-width:950px){.scheduleblock strong{flex-basis:100%}}
 @media(max-width:700px){.topnav .nav,.modulemenu>summary{font-size:16px}.brandnav b{font-size:17px}.greeting h1{font-size:30px}.productivity small{font-size:13px}.scheduleblock strong,.taskname{font-size:16px}.scheduletime{font-size:14px;width:75px}.monthgrid button{font-size:16px;width:36px;height:36px}.monthgrid small{font-size:12px}}
+
+/* Pastel agenda; completion controls remain in task management. */
+.scheduleitem{border:0;padding:7px 0}
+.scheduleblock{padding:14px 16px;border-radius:8px}
+.scheduleblock.pastel0{background:#e6edff!important}
+.scheduleblock.pastel1{background:#e6f1eb!important}
+.scheduleblock.pastel2{background:#eee7fb!important}
+html[data-theme=dark] .scheduleblock.pastel0{background:#253b60!important}
+html[data-theme=dark] .scheduleblock.pastel1{background:#24483e!important}
+html[data-theme=dark] .scheduleblock.pastel2{background:#403355!important}
+.scheduleblock:hover{filter:brightness(.98)}
+html[data-theme=dark] .scheduleblock:hover{filter:brightness(1.1)}
