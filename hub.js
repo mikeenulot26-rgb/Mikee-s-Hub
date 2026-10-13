@@ -30,11 +30,37 @@ $('themeToggle').onclick=()=>setTheme(document.documentElement.dataset.theme==='
 function renderProfile(){const b=$('profile');if(state.profilePhoto&&b.dataset.photo!==state.profilePhoto){const img=el('img','profile-photo');img.src=state.profilePhoto;img.alt='Mikee Nulot';b.replaceChildren(img);b.dataset.photo=state.profilePhoto}}
 function calendarText(value){return String(value||'').replace(/\\/g,'\\\\').replace(/\r?\n/g,'\\n').replace(/,/g,'\\,').replace(/;/g,'\\;')}
 function exportReminderCalendar(){const h=hubData(),entries=[...h.events.map(e=>({id:e.id,title:e.title,when:e.when,notes:e.notes})),...h.tasks.filter(t=>!t.done&&t.due).map(t=>({id:t.id,title:t.title,when:t.due+'T'+(t.time||'09:00'),notes:'Task · '+(t.category||'Personal')}))];if(!entries.length){toast('Add a dated task or event first.');return}const lines=['BEGIN:VCALENDAR','VERSION:2.0','PRODID:-//Mikees Hub//Reminders//EN','CALSCALE:GREGORIAN'];for(const e of entries){const utc=new Date(e.when+':00+04:00');if(Number.isNaN(utc.getTime()))continue;lines.push('BEGIN:VEVENT','UID:'+e.id+'@mikees-hub','DTSTAMP:'+new Date().toISOString().replace(/[-:]/g,'').replace(/\.\d{3}/,''),'DTSTART:'+utc.toISOString().replace(/[-:]/g,'').replace(/\.\d{3}/,''),'SUMMARY:'+calendarText(e.title),'DESCRIPTION:'+calendarText(e.notes),'BEGIN:VALARM','TRIGGER:-PT15M','ACTION:DISPLAY','DESCRIPTION:Reminder','END:VALARM','END:VEVENT')}lines.push('END:VCALENDAR');download(new Blob([lines.join('\r\n')+'\r\n'],{type:'text/calendar;charset=utf-8'}),'mikees-hub-reminders.ics')}
-async function enableBrowserAlerts(){if(/iPhone|iPad|iPod/.test(navigator.userAgent)&&!navigator.standalone&&!matchMedia('(display-mode: standalone)').matches){toast('Open in Safari, tap Share → Add to Home Screen, then open the Hub icon to enable alerts.');return}if(!('Notification' in window)){toast('This browser does not support notifications.');return}const permission=await Notification.requestPermission();if(permission==='granted'){localStorage.setItem('hub-browser-alerts','on');toast('Browser alerts enabled while the Hub is open.')}else toast('Notifications are blocked. Enable them in browser settings.')}
-function reminderSettings(){utility('Reminders & notifications',['iPhone setup: Safari → Share → Add to Home Screen. Open the Hub icon, then enable browser alerts. Alerts currently require the Hub to stay open.','Email delivery is not connected yet. Target account: your approved owner email.','For phone reminders now, export your schedule and import it into your phone’s calendar. The file includes a 15-minute alert. Calendar updates require a new export; automatic sync is not connected.']);const controls=el('div','settingsgroup');controls.append(button('Enable browser alerts',enableBrowserAlerts),button('Download calendar reminders',exportReminderCalendar));$('utilityBody').append(controls)}
+
+function pushKeyBytes(key){const raw=atob(key.replace(/-/g,'+').replace(/_/g,'/'));return Uint8Array.from(raw,c=>c.charCodeAt(0))}
+async function enableBrowserAlerts(){
+ if(/iPhone|iPad|iPod/.test(navigator.userAgent)&&!navigator.standalone&&!matchMedia('(display-mode: standalone)').matches){toast('Open in Safari → Share → Add to Home Screen. Open the Hub icon to enable notifications.');return}
+ if(!('Notification' in window)||!('serviceWorker' in navigator)||!('PushManager' in window)){toast('Push notifications are not supported. On iPhone use iOS 16.4 or later and the Home Screen app.');return}
+ try{
+  const permission=await Notification.requestPermission();
+  if(permission!=='granted'){toast('Allow notifications in your phone settings, then try again.');return}
+  const config=await Cloud.reminders({action:'config'});
+  const registration=await navigator.serviceWorker.ready;
+  let subscription=await registration.pushManager.getSubscription();
+  if(!subscription)subscription=await registration.pushManager.subscribe({userVisibleOnly:true,applicationServerKey:pushKeyBytes(config.publicKey)});
+  await Cloud.reminders({action:'subscribe',subscription:subscription.toJSON()});
+  localStorage.setItem('hub-push-enabled','on');
+  localStorage.removeItem('hub-browser-alerts');
+  toast('Background reminders enabled on this device—even when the Hub is closed.');
+ }catch(e){toast('Could not enable reminders: '+e.message)}
+}
+async function testBackgroundReminder(){
+ try{const registration=await navigator.serviceWorker.ready;const s=await registration.pushManager.getSubscription();if(!s)throw Error('Enable background notifications first.');await Cloud.reminders({action:'test',endpoint:s.endpoint});toast('Test notification sent. Check your iPhone notifications.')}catch(e){toast(e.message)}
+}
+async function disableBackgroundReminders(){
+ try{const registration=await navigator.serviceWorker.ready;const s=await registration.pushManager.getSubscription();if(s){await Cloud.reminders({action:'unsubscribe',endpoint:s.endpoint});await s.unsubscribe()}localStorage.removeItem('hub-push-enabled');toast('Background reminders disabled on this device.')}catch(e){toast(e.message)}
+}
+function reminderSettings(){utility('Reminders & notifications',[
+'Background push reminders work when Mikee’s Hub is closed. Enable them once on each device.',
+'iPhone: Safari → Share → Add to Home Screen. Open the Hub icon, sign in, and tap Enable background notifications.',
+'Reminders are scheduled 15 minutes before timed events and tasks. Tasks without a time use 9:00 AM Dubai time. The server checks every minute.',
+'Your tasks and events must be saved to the cloud. An internet connection and phone notification permissions are required.',
+'Email reminders are not connected yet.'
+]);const controls=el('div','settingsgroup');controls.append(button('Enable background notifications',enableBrowserAlerts),button('Send test notification',testBackgroundReminder),button('Disable on this device',disableBackgroundReminders),button('Download calendar reminders',exportReminderCalendar));$('utilityBody').append(controls)}
 $('settings').onclick=()=>{utility('Workspace settings',['Timezone: Asia/Dubai','Your profile photo is saved in your private workspace.']);const controls=el('div','settingsgroup');controls.append(button('Toggle light / dark mode',()=>setTheme(document.documentElement.dataset.theme==='dark'?'light':'dark')),button('Reminder delivery',reminderSettings));$('utilityBody').append(controls)};
 $('notifications').onclick=reminderSettings;
-const deliveredReminders=new Set();
-setInterval(()=>{if($('authGate').hidden!==true||localStorage.getItem('hub-browser-alerts')!=='on'||!('Notification' in window)||Notification.permission!=='granted')return;const h=hubData();const items=[...h.events.map(e=>({id:e.id,title:e.title,when:e.when})),...h.tasks.filter(t=>!t.done&&t.due).map(t=>({id:t.id,title:t.title,when:t.due+'T'+(t.time||'09:00')}))];for(const item of items){const due=new Date(item.when+':00+04:00').getTime(),key=item.id+':'+item.when;if(due-Date.now()<=15*60000&&due-Date.now()>-60000&&!deliveredReminders.has(key)){try{navigator.serviceWorker.ready.then(r=>r.showNotification('Mikee’s Hub reminder',{body:item.title,tag:key})).then(()=>deliveredReminders.add(key)).catch(()=>{});deliveredReminders.add(key)}catch{}}}},30000);
-
 if('serviceWorker' in navigator)navigator.serviceWorker.register('/sw.js').catch(()=>console.warn('Notification worker could not start.'));
