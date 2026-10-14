@@ -57,6 +57,34 @@ async function mtDraw(d,target){
  if(propertyTool&&photo){ctx.save();ctx.beginPath();ctx.rect(0,0,w,h);ctx.clip();mtDrawCover(ctx,photo.image,0,0,w,h,Number(d.photoZoom)||100,Number(d.photoX)??.5,Number(d.photoY)??.5);ctx.restore();
 
  const shade=ctx.createLinearGradient(0,0,0,h);shade.addColorStop(0,'rgba(8,28,34,.72)');shade.addColorStop(.3,'rgba(8,28,34,.05)');shade.addColorStop(1,'rgba(8,28,34,.48)');ctx.fillStyle=shade;ctx.fillRect(0,0,w,h);}
+
+ if(propertyTool&&!classic){
+  // A photo-first layout: compact details above, agent and permit below.
+  ctx.textAlign='left';
+  if(brand.logo){const logo=await optionalImage(brand.logo);ctx.drawImage(logo,...C.rect(logo.naturalWidth,logo.naturalHeight,260,76,'contain').map((v,i)=>i===0?v+90:i===1?v+88:v))}
+  else designText(ctx,brand.name||'Croswell',90,132,300,36,white,'500');
+  ctx.textAlign='right';
+  designText(ctx,MT_TOOLS.find(t=>t.id===d.tool)?.name,990,176,590,82,white,'500');
+  const specs=[d.beds?(String(d.beds).toLowerCase()==='studio'?'STUDIO':d.beds+' BED'):'',d.baths?d.baths+' BATHROOM':'',d.area?Number(String(d.area).replace(/,/g,'')).toLocaleString()+' SQ FT':''].filter(Boolean);
+  ctx.font='500 19px Arial, sans-serif';
+  const widths=specs.map(text=>ctx.measureText(text).width+38),total=widths.reduce((a,b)=>a+b,0)+Math.max(0,specs.length-1)*14;
+  let bx=990-total;ctx.textAlign='center';
+  specs.forEach((text,i)=>{mtRounded(ctx,bx,275,widths[i],52,9);ctx.fillStyle='rgba(255,255,255,.09)';ctx.fill();ctx.strokeStyle='rgba(255,255,255,.55)';ctx.lineWidth=1;ctx.stroke();ctx.fillStyle=white;ctx.fillText(text,bx+widths[i]/2,308);bx+=widths[i]+14});
+  ctx.textAlign='right';
+  designText(ctx,d.propertyName||d.location||'Property details',990,375,780,29,white,'400');
+  if(d.propertyName&&d.location&&d.propertyName!==d.location)designText(ctx,d.location,990,418,780,25,white,'400');
+  if(d.price)designText(ctx,'AED '+Number(d.price).toLocaleString(),990,d.propertyName&&d.location&&d.propertyName!==d.location?475:437,780,40,white,'500');
+  if(!photo){ctx.textAlign='center';designText(ctx,'Choose a property photo',540,h*.48,800,35,white,'400')}
+  const cx=210,cy=h-310,r=118,head=d.headshotId?await mtImage(d.headshotId):null;
+  mtHeadshotRegion={cx,cy,r};ctx.save();ctx.beginPath();ctx.arc(cx,cy,r,0,Math.PI*2);ctx.clip();ctx.fillStyle=white;ctx.fillRect(cx-r,cy-r,2*r,2*r);
+  if(head)mtDrawCover(ctx,head.image,cx-r,cy-r,2*r,2*r,Number(d.headshotZoom)||100,Number(d.headX)??.5,Number(d.headY)??.5);
+  ctx.restore();ctx.beginPath();ctx.arc(cx,cy,r,0,Math.PI*2);ctx.strokeStyle=white;ctx.lineWidth=4;ctx.stroke();
+  ctx.textAlign='left';designText(ctx,d.agentName||'Agent name',90,h-132,680,34,white,'500');
+  designText(ctx,d.agentTitle||'',90,h-86,680,23,white,'400');
+  if(d.agentPhone)designText(ctx,d.agentPhone,90,h-48,680,23,white,'400');
+  if(d.qrId){const qr=await mtImage(d.qrId);mtRounded(ctx,850,h-246,160,160,16);ctx.fillStyle=white;ctx.fill();ctx.drawImage(qr.image,...C.rect(qr.image.naturalWidth,qr.image.naturalHeight,144,144,'contain').map((v,i)=>i===0?v+858:i===1?v+h-238:v))}
+  return c;
+ }
  const headingColor=classic||propertyTool&&photo?white:ink;
  if(brand.logo){const image=await optionalImage(brand.logo);ctx.drawImage(image,...C.rect(image.naturalWidth,image.naturalHeight,320,88,'contain').map((v,i)=>i===0?v+380:i===1?v+62:v))}
  else{ctx.textAlign='center';designText(ctx,brand.name||'Croswell',540,110,900,38,headingColor,'600');ctx.textAlign='left'}
