@@ -13,17 +13,17 @@ async function openPropertyCarousel(){
   const media=all.filter(photo=>photo.property===p.id).sort((a,b)=>(a.order||0)-(b.order||0)),row=el('div','carousel-property-row'),label=el('label','carousel-check'),check=el('input');check.type='checkbox';check.disabled=!media.length;label.append(check,el('strong','',p.name));row.append(label);
   if(!media.length){row.append(el('p','muted','Upload a photo for this property first.'));list.append(row);continue}
   let chosen=media.some(x=>x.id===p.socialPhoto)?p.socialPhoto:media.some(x=>x.id===p.hero)?p.hero:media[0].id;
-  const grid=el('div','carousel-thumbnail-grid');grid.setAttribute('role','group');grid.setAttribute('aria-label','Choose a photo for '+p.name);
+  const grid=el('div','carousel-thumbnail-grid');grid.hidden=true;grid.setAttribute('role','group');grid.setAttribute('aria-label','Choose a photo for '+p.name);
   const tiles=[];
   const refresh=()=>{for(const {tile,photo}of tiles){const active=photo.id===chosen;tile.classList.toggle('selected',active);tile.setAttribute('aria-pressed',String(active))}};
   for(const [index,photo]of media.entries()){
    const tile=el('button','carousel-thumbnail'),image=el('img'),mark=el('span','carousel-selected-mark','✓');tile.type='button';tile.setAttribute('aria-label','Choose photo '+(index+1)+' for '+p.name);image.alt='Photo '+(index+1)+' of '+p.name;image.loading='lazy';image.decoding='async';tile.append(image,mark);tiles.push({tile,photo});
    tile.onclick=()=>{chosen=photo.id;if(!check.checked){check.checked=true;selection.push({property:p.id,photo:chosen})}else{const s=selection.find(s=>s.property===p.id);if(s)s.photo=chosen}refresh();redrawOrder()};
    grid.append(tile);
-   const load=async()=>{try{if(!$('utilityDialog').open||!grid.isConnected)return;const img=await imageFor(photo,true);if(grid.isConnected)image.src=img.src}catch{tile.classList.add('photo-unavailable');tile.append(el('span','','Image unavailable'))}};
+   const load=async()=>{try{if(!$('utilityDialog').open||!grid.isConnected||grid.hidden||tile._thumbnailLoaded||tile._thumbnailLoading)return;tile._thumbnailLoading=true;const img=await imageFor(photo,true);if(grid.isConnected){image.src=img.src;tile._thumbnailLoaded=true}}catch{tile.classList.add('photo-unavailable');tile.append(el('span','','Image unavailable'))}finally{tile._thumbnailLoading=false}};
    tile._loadThumbnail=load;
   }
-  check.onchange=()=>{const index=selection.findIndex(s=>s.property===p.id);if(check.checked&&index<0)selection.push({property:p.id,photo:chosen});else if(!check.checked&&index>=0)selection.splice(index,1);redrawOrder()};
+  check.onchange=()=>{grid.hidden=!check.checked;if(check.checked)for(const tile of grid.querySelectorAll('.carousel-thumbnail'))tile._loadThumbnail();const index=selection.findIndex(s=>s.property===p.id);if(check.checked&&index<0)selection.push({property:p.id,photo:chosen});else if(!check.checked&&index>=0)selection.splice(index,1);redrawOrder()};
   row.append(el('small','muted',p.community||p.code||''),grid);list.append(row);refresh();
 
  }
