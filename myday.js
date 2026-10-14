@@ -31,8 +31,8 @@ async function rescheduleOccurrence(t,date,onMove=()=>{}){
  if(!/^\d{4}-\d{2}-\d{2}$/.test(date)||Number.isNaN(new Date(date+'T12:00Z').getTime()))throw Error('Choose a valid date.');
  if(t.seriesId&&hubData().tasks.some(x=>x.id!==t.id&&x.seriesId===t.seriesId&&x.due===date))throw Error('This recurring task already has an occurrence on that date.');
  if(t.due===date){onMove();return}
- const old=t.due;movingTaskIds.add(t.id);t.due=date;renderHub();Cloud.status('Private cloud · Saving schedule…');onMove();
- try{await hubSave();toast('Task moved to '+date+'.')}catch(e){t.due=old;renderHub();await tx('records','readwrite',s=>s.put(state,'workspace'));throw e}finally{movingTaskIds.delete(t.id);renderWeekBoard()}
+ const old=t.due;movingTaskIds.add(t.id);t.due=date;renderWeekBoard();renderMyDay();Cloud.status('Private cloud · Saving schedule…');onMove();
+ try{await hubSave({redraw:false});toast('Task moved to '+date+'.')}catch(e){t.due=old;renderWeekBoard();renderMyDay();await tx('records','readwrite',s=>s.put(state,'workspace'));throw e}finally{movingTaskIds.delete(t.id);renderWeekBoard()}
 }
 function moveTaskDialog(t){
  utility('Reschedule task',[t.title,'This moves only this occurrence. The repeat schedule stays the same.']);
