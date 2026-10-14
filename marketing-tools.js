@@ -72,7 +72,7 @@ async function mtDraw(d,target){
   ctx.textAlign='center';designText(ctx,d.salesValue?'AED '+Number(d.salesValue).toLocaleString():'Total sales value',540,h*.43,960,82,headingColor,'600');designText(ctx,d.transactions?d.transactions+' transactions':'Confirmed transactions',540,h*.43+100,900,45,headingColor,'500');designText(ctx,d.period||'',540,h*.43+180,900,32,headingColor,'400');designText(ctx,d.salesCategory||'',540,h*.43+235,900,30,headingColor,'400');ctx.textAlign='left';
  }
  const cardX=70,cardY=h-460,cardW=940,cardH=380;
- mtRounded(ctx,cardX,cardY,cardW,cardH,24);ctx.fillStyle=classic?'rgba(12,39,47,.88)':cream;ctx.fill();ctx.strokeStyle=classic?'rgba(255,255,255,.3)':'#d1d8d2';ctx.lineWidth=2;ctx.stroke();
+ mtRounded(ctx,cardX,cardY,cardW,cardH,24);ctx.save();ctx.fillStyle=classic?color:cream;ctx.globalAlpha=classic?.62:1;ctx.fill();ctx.restore();ctx.strokeStyle=classic?'rgba(255,255,255,.3)':'#d1d8d2';ctx.lineWidth=2;ctx.stroke();
  const cardInk=classic?white:ink,muted=classic?'#d4e1df':'#647774';
  if(propertyTool){
   const specifications=[d.beds?(String(d.beds).toLowerCase()==='studio'?'Studio':d.beds+' bed'):'',d.baths?d.baths+' bath':'',d.area?Number(String(d.area).replace(/,/g,'')).toLocaleString()+' sq ft':''].filter(Boolean).join('   ·   ');designText(ctx,specifications,100,cardY+56,650,26,muted,'500');
@@ -83,7 +83,7 @@ async function mtDraw(d,target){
  designText(ctx,d.agentName||'Agent name',100,agentY,610,39,cardInk,'500');designText(ctx,d.agentTitle||'',100,agentY+44,610,25,muted,'500');if(d.agentPhone)designText(ctx,d.agentPhone,100,agentY+81,590,25,muted,'400');
  const head= d.headshotId?await mtImage(d.headshotId):null,cx=846,cy=cardY+158,r=118;mtHeadshotRegion={cx,cy,r};
  ctx.save();ctx.beginPath();ctx.arc(cx,cy,r,0,Math.PI*2);ctx.clip();if(head)mtDrawCover(ctx,head.image,cx-r,cy-r,2*r,2*r,Number(d.headshotZoom)||100,Number(d.headX)??.5,Number(d.headY)??.5);else{ctx.fillStyle=classic?'#48666a':'#d7e1de';ctx.fillRect(cx-r,cy-r,2*r,2*r)}ctx.restore();ctx.beginPath();ctx.arc(cx,cy,r,0,Math.PI*2);ctx.strokeStyle=classic?'#c4d5d3':'#b2c1bb';ctx.lineWidth=2;ctx.stroke();
- if(propertyTool&&d.qrId){const qr=await mtImage(d.qrId);ctx.fillStyle='#fff';ctx.fillRect(862,h-174,148,148);ctx.drawImage(qr.image,...C.rect(qr.image.naturalWidth,qr.image.naturalHeight,132,132,'contain').map((v,i)=>i===0?v+870:i===1?v+h-166:v))}
+ if(propertyTool&&d.qrId){const qr=await mtImage(d.qrId);ctx.fillStyle='#fff';mtRounded(ctx,862,h-174,148,148,20);ctx.fill();ctx.drawImage(qr.image,...C.rect(qr.image.naturalWidth,qr.image.naturalHeight,132,132,'contain').map((v,i)=>i===0?v+870:i===1?v+h-166:v))}
  return c;
 }
 async function mtRender(){if(!mtDraft)return;mtReadForm();const version=++mtRenderVersion;$('mtQRStatus').textContent=mtDraft.qrId?'Permit QR selected.':'Upload a permit QR before property-post export.';try{const c=await mtDraw(structuredClone(mtDraft));if(version!==mtRenderVersion)return;const output=$('mtCanvas');output.width=c.width;output.height=c.height;output.getContext('2d').drawImage(c,0,0);$('mtStatus').textContent='Preview updated.'}catch(e){if(version===mtRenderVersion)$('mtStatus').textContent=e.message}}
