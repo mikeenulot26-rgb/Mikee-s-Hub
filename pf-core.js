@@ -48,11 +48,44 @@ if(input.sourceFurnishing==='Unfurnished'&&/fully furnished/i.test(text))add('Mu
 add('Optional','Manual review','Check grammar, bullets and photo claims','Entire listing','Rule-based checks do not establish all grammar errors or visual feature accuracy.','Read the final text and compare every claim with the selected photos.');
 return findings.sort((a,b)=>['Must fix','Recommended','Optional'].indexOf(a.severity)-['Must fix','Recommended','Optional'].indexOf(b.severity));
 }
-function titles(input){
-const features=input.features.split('\n').map(s=>s.trim()).filter(Boolean),short=s=>s.replace(/\|/g,' ').replace(/\b(ROI|investment)\b/gi,'').trim().slice(0,18),a=short(features[0]||'Property Details'),b=short(features[1]||input.location||'View Listing'),c=short(features[2]||'Arrange a Viewing');
-const options=[[a,b,c],[b,a,'Enquire Today'],[a,c,'View Details'],[b,c,'Property Details'],[c,a,'Enquire Today']].map(parts=>{let x=parts.map(s=>s||'View Details');while(x.join(' | ').length>50){const i=x.indexOf([...x].sort((a,b)=>b.length-a.length)[0]);x[i]=x[i].slice(0,-1).trimEnd()}return x.join(' | ')});
-return options;
+function titlePhrases(input){
+ const facts=(input.features||'')+'\n'+(input.community||''),phrases=[],add=(pattern,phrase)=>{if(pattern.test(facts)&&!phrases.includes(phrase))phrases.push(phrase)};
+ add(/\bsea view\b/i,'Sea View');add(/\bmarina view\b/i,'Marina View');add(/\bpark view\b/i,'Park View');add(/\bcorner\b/i,'Corner Unit');add(/\bhigh floor\b/i,'High Floor');add(/\bprivate pool\b/i,'Private Pool');add(/\bbalcony\b/i,'Balcony');add(/covered parking/i,'Covered Parking');add(/built.?in wardrobes/i,'Built-in Wardrobes');add(/built.?in storage/i,'Built-in Storage');add(/shared pool/i,'Shared Pool');add(/shared gym/i,'Shared Gym');add(/view of landmark|landmark view/i,'Landmark View');add(/\bunfurnished\b/i,'Unfurnished');
+ if(!/\bunfurnished\b/i.test(facts))add(/\bfurnished\b/i,'Furnished');
+ add(/\bstudio\b/i,'Studio');
+ const beds=facts.match(/\b([1-9])\s*(?:bedroom|bed|BR)\b/i);if(beds)phrases.push(beds[1]+' Bedrooms');
+ const area=facts.match(/\b([\d,]+(?:\.\d+)?)\s*(?:sq\s*ft|sqft)\b/i);if(area)phrases.push(area[1]+' Sq Ft');
+ for(const line of (input.features||'').split('\n')){const phrase=line.trim().replace(/\|/g,' ').replace(/^[-•]\s*/,'');if(phrase.length>=3&&phrase.length<=20&&!/:|\b(ROI|investment|property details|enquire|view listing)\b/i.test(phrase)&&!phrases.some(p=>p.toLowerCase()===phrase.toLowerCase())&&!/apartment|property area/i.test(phrase))phrases.push(phrase)}
+ return phrases;
 }
-function description(input){const features=input.features.split('\n').map(s=>s.trim()).filter(Boolean),community=input.community.split('\n').map(s=>s.trim()).filter(Boolean);return [input.opening||'Property details'+(input.location?' in '+input.location: '')+'.','','Property features',...features.map(s=>'• '+s),'','Community features',...community.map(s=>'• '+s),'',input.location?'Located in '+input.location+'. Contact us to arrange a viewing.':'Contact us to arrange a viewing.'].join('\n')}
+function titles(input){
+ const phrases=titlePhrases(input),options=[];const type=phrases.find(p=>p==='Studio'||/ Bedrooms$/.test(p));if(type){phrases.splice(phrases.indexOf(type),1);phrases.unshift(type)}
+ if(phrases.length<3)throw Error('Confirm at least three concise property benefits before generating titles. The system will not invent benefits or cut numbers to fit.');
+ for(let i=0;i<phrases.length;i++)for(let j=i+1;j<phrases.length;j++)for(let k=j+1;k<phrases.length;k++){const value=[phrases[i],phrases[j],phrases[k]].join(' | ');if(value.length<=50&&!options.includes(value))options.push(value);if(options.length===5)return options}
+ if(options.length){const first=options[0].split(' | ');for(const order of [[1,0,2],[0,2,1],[2,0,1],[1,2,0]]){const value=order.map(i=>first[i]).join(' | ');if(!options.includes(value))options.push(value);if(options.length===5)return options}}
+ throw Error('The confirmed phrases are too long for five complete titles. Shorten the wording without changing facts.');
+}
+function description(input){
+ const original=(input.description||'').replace(/\r/g,''),lines=original.split('\n').map(s=>s.trim()).filter(Boolean),property=[],community=[],details=[],seen=new Set();let section='property',opening=input.opening?.trim()||'',closing='';
+ const generic=line=>/^(?:ideal|perfect) for (?:both )?end.users and investors\.?$/i.test(line.replace(/^[-•]\s*/,''));
+ const add=(list,value)=>{const cleaned=value.replace(/^[-•–]\s*/,'').replace(/\s{2,}/g,' ').trim(),key=cleaned.toLowerCase().replace(/[.!]+$/,'');if(cleaned&&!seen.has(key)&&!generic(cleaned)){seen.add(key);list.push(cleaned)}};
+ for(const line of lines){
+ if(/^(property features|property details|unit features)\s*:?$/i.test(line)){section='property';continue}
+ if(/^(property amenities|community features|community amenities|amenities)\s*:?$/i.test(line)){section='community';continue}
+ if(/^(payment plan|payment terms|handover|additional information|contact details)\s*:?$/i.test(line)){section='details';add(details,line);continue}
+ if(!opening&&!/^[-•–]/.test(line)){const sentences=line.match(/[^.!?]+[.!?](?:\s|$)|.+$/g)||[line];opening=sentences.shift().trim();for(const sentence of sentences)add(property,sentence.trim());continue}
+ if(/^(company name|RERA|ORN|BRN|reference|for bookings|for more|contact|call|whatsapp|agent|broker|payment|down payment|handover|service charge|tenan|vacan|available|price)/i.test(line)){add(details,line);continue}
+ if(/^located in/i.test(line)){closing=line;continue}
+ add(section==='community'?community:section==='details'?details:property,line);
+ }
+ for(const line of (input.features||'').split('\n').filter(Boolean))add(property,line);
+ for(const line of (input.community||'').split('\n').filter(Boolean))add(community,line);
+ if(!opening)opening=input.location?'Property available in '+input.location+'.':'Property details below.';
+ const output=[opening,'','Property features',...property.map(s=>'• '+s),'','Community features',...community.map(s=>'• '+s)];
+ if(details.length)output.push('','Additional details',...details);
+ output.push('',closing|| (input.location?'Located in '+input.location+'. Contact us for further details.':'Contact us for further details.'));
+ return output.join('\n').replace(/both end.users and investors/gi,'interested buyers');
+}
+
 root.PFCore={shift,validDate,renewalDates,reconcile,listingErrors,audit,titles,description};
 })(typeof window==='undefined'?globalThis:window);
