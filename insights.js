@@ -5,7 +5,7 @@ function reviewBounds(anchor,period){const d=new Date(anchor+'T12:00:00Z');if(pe
 function reviewShift(anchor,period,n){if(period==='week')return dateShift(anchor,n*7);const d=new Date(anchor+'T12:00:00Z');return new Date(Date.UTC(d.getUTCFullYear(),d.getUTCMonth()+n,1,12)).toISOString().slice(0,10)}
 function buildProductivityModel(h,properties,today,anchor,period){
  const bounds=reviewBounds(anchor,period),prev=reviewBounds(reviewShift(bounds.start,period,-1),period),inside=(day,b=bounds)=>!!day&&day>=b.start&&day<=b.end;
- const tasks=h.tasks||[],completed=tasks.filter(t=>t.done&&inside(reviewDay(t.completedAt))).sort((a,b)=>String(b.completedAt).localeCompare(String(a.completedAt)));
+ const tasks=(h.tasks||[]).filter(t=>!t.cancelled),completed=tasks.filter(t=>t.done&&inside(reviewDay(t.completedAt))).sort((a,b)=>String(b.completedAt).localeCompare(String(a.completedAt)));
  const due=tasks.filter(t=>inside(t.due)),dueDone=due.filter(t=>t.done),notes=(h.notes||[]).filter(n=>inside(reviewDay(n.created))),added=properties.filter(p=>inside(reviewDay(p.created))),events=(h.events||[]).filter(e=>inside((e.when||'').slice(0,10)));
  const overdue=tasks.filter(t=>!t.done&&t.due&&t.due<today&&inside(t.due)),undated=tasks.filter(t=>!t.done&&!t.due);
  const onTime=completed.filter(t=>t.completedDue&&reviewDay(t.completedAt)<=t.completedDue),dated=completed.filter(t=>t.completedDue),categories={};

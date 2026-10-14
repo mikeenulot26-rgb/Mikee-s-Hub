@@ -7,7 +7,7 @@ async function save(data){const next=revision+1;const rows=await json(`/rest/v1/
 async function upload(p){if(p.cloudPath)return;status('Private cloud · Uploading photo');const path=`${session.user.id}/${p.property}/${p.id}`;await call('/storage/v1/object/marketing-private/'+path,{method:'POST',headers:{'Content-Type':p.blob.type,'x-upsert':'true'},body:p.blob});p.cloudPath=path}
 async function download(p){const response=await call('/storage/v1/object/authenticated/marketing-private/'+p.cloudPath);return response.blob()}
 async function uploadVariant(path,blob){await call('/storage/v1/object/marketing-private/'+path,{method:'POST',headers:{'Content-Type':blob.type,'x-upsert':'false'},body:blob})}
-async function remove(p){if(p.cloudPath)await json('/storage/v1/object/marketing-private',{method:'DELETE',body:JSON.stringify({prefixes:[p.cloudPath,p.cleanedPath].filter(Boolean)})})}
+async function remove(p){if(p.cloudPath)await json('/storage/v1/object/marketing-private',{method:'DELETE',body:JSON.stringify({prefixes:[p.cloudPath,p.cleanedPath,p.approvedPath].filter(Boolean)})})}
 async function init(start){
  const form=document.getElementById('loginForm'),submit=form.querySelector('button[type="submit"]'),register=document.getElementById('register'),message=document.getElementById('authMessage');let signingIn=false,restoring=false;
  const complete=()=>{document.getElementById('authGate').hidden=true;document.getElementById('signOut').hidden=false;status('Private cloud · Connected')};
@@ -25,4 +25,4 @@ async function init(start){
  finally{restoring=false;loading(false)}
  document.getElementById('authGate').hidden=false;
 }
-document.getElementById('signOut').onclick=async()=>{try{await call('/auth/v1/logout',{method:'POST'})}catch{}localStorage.removeItem(sessionKey);location.reload()};return{changePassword:password=>json('/auth/v1/user',{method:'PUT',body:JSON.stringify({password})}),init,save,upload,uploadVariant,download,remove,status,reminders:(body)=>json('/functions/v1/hub-reminders',{method:'POST',body:JSON.stringify(body)})};})();
+document.getElementById('signOut').onclick=async()=>{try{await call('/auth/v1/logout',{method:'POST'})}catch{}localStorage.removeItem(sessionKey);location.reload()};return{changePassword:password=>json('/auth/v1/user',{method:'PUT',body:JSON.stringify({password})}),pfPublic:body=>json('/functions/v1/pf-public-review',{method:'POST',body:JSON.stringify(body)}),init,save,upload,uploadVariant,download,remove,status,reminders:(body)=>json('/functions/v1/hub-reminders',{method:'POST',body:JSON.stringify(body)})};})();
