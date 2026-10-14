@@ -103,24 +103,28 @@ async function pfImportRemotePhotos(){
  if(!id){id=crypto.randomUUID();const l=pfData().listings.find(l=>l.id===$('pfReviewListing').value);state.properties.push({id,name:l?.name||pfPublicDetails?.location||'Public listing photos',code:nextPropertyCode(),created:new Date().toISOString()});await persist({syncMedia:false});if(l)await pfCommit(()=>l.marketingId=id);renderPF();$('pfReviewProperty').value=id;}
  await selectProperty(id);const files=[];for(const p of selected){await pfRemoteImage(p);files.push(new File([p.blob],p.name+'.jpg',{type:p.blob.type||'image/jpeg'}))}await upload(files);pfReviewPhotos=photos.map(p=>p.id);await pfPhotoPicker();toast('Selected photos are in Marketing. Preview and approve enhancement before saving an enhanced version.');
 }
-async function pfReadPublicLink(runAfter=false){
- if(pfLinkLoading){const ready=await pfLinkLoading;if(ready&&runAfter)await pfRunReview();return ready}
- const url=$('pfReviewLink').value.trim();if(!url){$('pfReviewStatus').textContent='Paste a public listing link first.';return false}
- const b=$('pfFetchLink');b.disabled=true;$('pfReviewStatus').textContent='Reading the supplied public listing…';
- pfLinkLoading=(async()=>{try{
- const result=await Cloud.pfPublic({url});if($('pfReviewLink').value.trim()!==url)return false;
- if(!result.ok){$('pfReviewStatus').textContent=result.message+' The listing could not be assessed from this link. Manual entry remains available.';return false}
+function pfPopulatePublicResult(result,url){
  const form=$('pfReviewForm');for(const key of ['title','description','features','community','amenities','baths'])form.elements[key].value=result[key]||'';
  form.elements.beds.value=result.beds==='Studio'?'0':result.beds||'';$('pfReviewLocation').value=result.location||'';pfLoadedUrl=url;pfPublicDetails=result;
  for(const p of pfRemotePhotos)if(p.objectURL)URL.revokeObjectURL(p.objectURL);pfRemotePhotos=(result.photos||[]).map((p,i)=>({...p,id:'public-'+i,selected:true}));pfRemoteGallery();
- $('pfFactsConfirmed').checked=false;$('pfReviewStatus').textContent='Public listing loaded: title, description, available fields and '+pfRemotePhotos.length+' photos. Retrieved claims still need confirmation before generating approved improvements.';
+ $('pfFactsConfirmed').checked=false;$('pfLinkStatus').textContent=$('pfReviewStatus').textContent='Public listing loaded: title, description, available fields and '+pfRemotePhotos.length+' photos. Retrieved claims still need confirmation before generating approved improvements.';
+}
+async function pfReadPublicLink(runAfter=false){
+ if(pfLinkLoading){const ready=await pfLinkLoading;if(ready&&runAfter)await pfRunReview();return ready}
+ const url=$('pfReviewLink').value.trim();if(!url){$('pfReviewStatus').textContent='Paste a public listing link first.';return false}
+ const b=$('pfFetchLink');b.disabled=true;b.textContent='Reading…';$('pfLinkStatus').textContent=$('pfReviewStatus').textContent='Reading the supplied public listing…';
+ pfLinkLoading=(async()=>{try{
+ const result=await Cloud.pfPublic({url});if($('pfReviewLink').value.trim()!==url)return false;
+ if(!result.ok){$('pfLinkStatus').textContent=$('pfReviewStatus').textContent=result.message+' Use Import saved public listing page above to load the details without retyping.';return false}
+ pfPopulatePublicResult(result,url);
  return true;
- }catch(e){$('pfReviewStatus').textContent='Could not read the public listing: '+e.message+'. No missing-listing findings were generated from this failed retrieval.';return false}
- finally{b.disabled=false}})();
+ }catch(e){$('pfLinkStatus').textContent=$('pfReviewStatus').textContent='Could not read the public listing: '+e.message+'. Import a saved public page instead.';return false}
+ finally{b.disabled=false;b.textContent='Read public link'}})();
  const ready=await pfLinkLoading;pfLinkLoading=null;if(ready&&runAfter)await pfRunReview();return ready;
 }
 
 function initPF(){
+ $('pfImportPage').onchange=async e=>{const file=e.target.files[0];if(!file)return;try{if(file.size>10000000)throw Error('Choose an HTML page under 10 MB.');const result=extractPFPage(await file.text());if(!result.ok)throw Error(result.message);pfPopulatePublicResult(result,$('pfReviewLink').value.trim());$('pfLinkStatus').textContent='Saved public page imported. Listing fields and public photo references loaded; no account or lead data was imported.';await pfRunReview()}catch(error){$('pfLinkStatus').textContent=error.message}finally{e.target.value=''}};
  document.querySelectorAll('[data-pf-tab]').forEach(b=>b.onclick=()=>pfChooseTab(b.dataset.pfTab));
  for(const id of ['pfSearch','pfStatusFilter','pfAgentFilter','pfLocationFilter','pfDateFilter'])$(id).oninput=renderPF;
  $('pfNewListing').onclick=()=>{pfEditing='';$('pfListingForm').reset();pfFormErrors({});$('pfFormTitle').textContent='Add a listing';$('pfReactivation').hidden=true;renderPF()};
