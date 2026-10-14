@@ -5,7 +5,7 @@ function dubaiDate(){return new Intl.DateTimeFormat('en-CA',{timeZone:'Asia/Duba
 function dateShift(date,amount){const d=new Date(date+'T12:00:00Z');d.setUTCDate(d.getUTCDate()+amount);return d.toISOString().slice(0,10)}
 function el(tag,cls,text){const e=document.createElement(tag);if(cls)e.className=cls;if(text!==undefined)e.textContent=text;return e}
 function hubEmpty(parent,message){if(!parent.childNodes.length)parent.append(el('p','muted emptycompact',message))}
-async function hubSave(){ensureRecurringTasks(hubData(),dubaiDate());await persist();renderHub()}
+async function hubSave(){ensureRecurringTasks(hubData(),dubaiDate());await persist({syncMedia:false});renderHub()}
 function editTask(t){editingTask=t.id;const f=$('taskForm');for(const k of ['title','due','time','priority','category','assigned'])f.elements[k].value=t[k]||({priority:'Normal',category:'Personal',assigned:'Mikee'}[k]||'');f.elements.due.required=false;f.elements.repeat.value=hubData().taskSeries?.find(s=>s.id===t.seriesId&&s.active)?.repeat||'none';f.elements.due.required=f.elements.repeat.value!=='none';f.elements.status.value=t.done?'Completed':t.status||'To Do';page('tasks');f.elements.title.focus()}
 function editEvent(e){editingEvent=e.id;const f=$('eventForm');for(const k of ['title','when','notes'])f.elements[k].value=e[k]||'';page('calendar')}
 function taskRow(t){

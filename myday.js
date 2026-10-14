@@ -24,15 +24,19 @@ function taskOptions(t){
  controls.append(button('Delete this task',async()=>{close();if(!await confirmAction('Delete this task occurrence? Other recurring occurrences stay saved.'))return;const h=hubData(),before=[...h.tasks];h.tasks=h.tasks.filter(x=>x.id!==t.id);try{await hubSave();toast('Task deleted.')}catch(e){h.tasks=before;renderHub();toast(e.message)}}));
  $('utilityBody').append(controls);
 }
-async function rescheduleOccurrence(t,date){
+const movingTaskIds=new Set();
+async function rescheduleOccurrence(t,date,onMove=()=>{}){
+ if(movingTaskIds.has(t.id))throw Error('This task is still saving.');
  if(t.done)throw Error('Reopen this task before rescheduling it.');
  if(!/^\d{4}-\d{2}-\d{2}$/.test(date)||Number.isNaN(new Date(date+'T12:00Z').getTime()))throw Error('Choose a valid date.');
  if(t.seriesId&&hubData().tasks.some(x=>x.id!==t.id&&x.seriesId===t.seriesId&&x.due===date))throw Error('This recurring task already has an occurrence on that date.');
- const old=t.due;t.due=date;try{await hubSave();toast('Task moved to '+date+'.')}catch(e){t.due=old;renderHub();throw e}
+ if(t.due===date){onMove();return}
+ const old=t.due;movingTaskIds.add(t.id);t.due=date;renderHub();Cloud.status('Private cloud · Saving schedule…');onMove();
+ try{await hubSave();toast('Task moved to '+date+'.')}catch(e){t.due=old;renderHub();await tx('records','readwrite',s=>s.put(state,'workspace'));throw e}finally{movingTaskIds.delete(t.id);renderWeekBoard()}
 }
 function moveTaskDialog(t){
  utility('Reschedule task',[t.title,'This moves only this occurrence. The repeat schedule stays the same.']);
- const form=el('form','move-task-form'),label=el('label','','New date'),input=el('input');input.type='date';input.required=true;input.value=t.due||dubaiDate();label.append(input);const save=el('button','primary','Move task');save.type='submit';form.append(label,save);form.onsubmit=async e=>{e.preventDefault();save.disabled=true;try{await rescheduleOccurrence(t,input.value);$('utilityDialog').close()}catch(error){toast(error.message)}finally{save.disabled=false}};$('utilityBody').append(form);
+ const form=el('form','move-task-form'),label=el('label','','New date'),input=el('input');input.type='date';input.required=true;input.value=t.due||dubaiDate();label.append(input);const save=el('button','primary','Move task');save.type='submit';form.append(label,save);form.onsubmit=async e=>{e.preventDefault();save.disabled=true;try{await rescheduleOccurrence(t,input.value,()=>$('utilityDialog').close())}catch(error){toast(error.message)}finally{save.disabled=false}};$('utilityBody').append(form);
 }
 function calendarDays(anchor,view){
  if(view==='day')return [anchor];
@@ -47,7 +51,7 @@ function renderWeekBoard(){
  column.append(heading);column.ondragover=e=>{if(e.dataTransfer.types.includes('application/x-hub-task')){e.preventDefault();e.dataTransfer.dropEffect='move'}};column.ondrop=async e=>{e.preventDefault();const id=e.dataTransfer.getData('application/x-hub-task'),task=h.tasks.find(t=>t.id===id);if(!task||task.done)return;try{await rescheduleOccurrence(task,date)}catch(error){toast(error.message)}};
  const entries=[...h.tasks.filter(t=>t.due===date).map(t=>({kind:'task',item:t,time:t.time||'99:99'})),...h.events.filter(e=>e.when?.startsWith(date)).map(e=>({kind:'event',item:e,time:e.when.slice(11,16)}))].sort((a,b)=>a.time.localeCompare(b.time));
  for(const entry of entries){const card=el('div','week-entry '+entry.kind+(entry.item.done?' done':'')),open=el('button','week-entry-open');open.append(el('small','',entry.time==='99:99'?'Any time':entry.time),el('strong','',entry.item.title));open.onclick=()=>entry.kind==='task'?editTask(entry.item):editEvent(entry.item);card.append(open);
- if(entry.kind==='task'&&!entry.item.done){card.draggable=true;card.ondragstart=e=>{e.dataTransfer.setData('application/x-hub-task',entry.item.id);e.dataTransfer.effectAllowed='move'};card.append(button('Move',()=>moveTaskDialog(entry.item)))}
+ if(entry.kind==='task'&&!entry.item.done){card.draggable=!movingTaskIds.has(entry.item.id);if(movingTaskIds.has(entry.item.id)){card.classList.add('saving');card.setAttribute('aria-busy','true');card.append(el('small','','Saving…'))}card.ondragstart=e=>{e.dataTransfer.setData('application/x-hub-task',entry.item.id);e.dataTransfer.effectAllowed='move'};card.append(button('Move',()=>moveTaskDialog(entry.item)))}
  column.append(card)}if(!entries.length)column.append(el('p','week-empty','Nothing scheduled'));board.append(column)}
 }
 $('calendarView').onchange=renderWeekBoard;
