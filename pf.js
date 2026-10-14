@@ -96,7 +96,7 @@ function pfRemoteGallery(){
  const grid=el('div','pf-photo-picker');gallery.append(grid);
  for(const photo of pfRemotePhotos){const tile=el('button','pf-photo-tile selected'),img=el('img');tile.type='button';img.alt=photo.name;tile.setAttribute('aria-label','Include '+photo.name);tile.setAttribute('aria-pressed','true');tile.onclick=()=>{photo.selected=!photo.selected;tile.classList.toggle('selected',photo.selected);tile.setAttribute('aria-pressed',String(photo.selected))};tile.append(img);grid.append(tile);photo.tile=tile;photo.img=img;}
  let index=0;const worker=async()=>{while(index<pfRemotePhotos.length){const photo=pfRemotePhotos[index++];try{const image=await pfRemoteImage(photo);if(photo.tile.isConnected)photo.img.src=image.src}catch{photo.unavailable=true;if(photo.tile.isConnected)photo.tile.append(el('span','','Photo unavailable'))}}};Promise.all([worker(),worker(),worker()]);
- if(pfRemotePhotos.length)gallery.append(button('Use selected public photos in Marketing',()=>pfImportRemotePhotos().catch(e=>toast(e.message))));
+ if(pfRemotePhotos.length){const all=button('Download all images ZIP',()=>pfDownloadPublicPhotos(all,false)),selected=button('Download selected images ZIP',()=>pfDownloadPublicPhotos(selected,true));gallery.append(all,selected,button('Use selected public photos in Marketing',()=>pfImportRemotePhotos().catch(e=>toast(e.message))));}
 }
 async function pfImportRemotePhotos(){
  const selected=pfRemotePhotos.filter(p=>p.selected&&!p.unavailable);if(!selected.length)throw Error('Select accessible public photos first.');let id=$('pfReviewProperty').value;
@@ -138,3 +138,15 @@ function initPF(){
 }
 
 initPF();
+
+async function pfDownloadPublicPhotos(control,selectedOnly=false){
+ const images=pfRemotePhotos.filter(p=>!selectedOnly||p.selected),files=[],failed=[];
+ if(!images.length){toast('Select at least one image.');return}
+ control.disabled=true;const label=control.textContent;
+ try{for(let i=0;i<images.length;i++){const p=images[i];control.textContent='Preparing '+(i+1)+' / '+images.length;
+ try{await pfRemoteImage(p);const extension=p.blob.type.includes('png')?'png':p.blob.type.includes('webp')?'webp':'jpg';files.push({name:String(i+1).padStart(2,'0')+'_'+C.safe(p.name)+'.'+extension,blob:p.blob})}catch{failed.push(p.name)}}
+ if(!files.length)throw Error('The images could not be downloaded. Try again.');
+ download(await C.zip(files),C.safe(pfPublicDetails?.reference||'public-listing')+'_images.zip');
+ toast(files.length+' images downloaded'+(failed.length?'; '+failed.length+' unavailable: '+failed.join(', '):'.'));
+ }catch(e){toast(e.message)}finally{control.disabled=false;control.textContent=label}
+}
