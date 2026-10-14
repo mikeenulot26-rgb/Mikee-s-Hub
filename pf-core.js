@@ -73,9 +73,9 @@ function description(input){
  if(/^(property features|property details|unit features)\s*:?$/i.test(line)){section='property';continue}
  if(/^(property amenities|community features|community amenities|amenities)\s*:?$/i.test(line)){section='community';continue}
  if(/^(payment plan|payment terms|handover|additional information|contact details)\s*:?$/i.test(line)){section='details';add(details,line);continue}
- if(!opening&&!/^[-•–]/.test(line)){const sentences=line.match(/[^.!?]+[.!?](?:\s|$)|.+$/g)||[line];opening=sentences.shift().trim();for(const sentence of sentences)add(property,sentence.trim());continue}
+ if(!opening&&!/^[-•–]/.test(line)){opening=line;continue}
  if(/^(company name|RERA|ORN|BRN|reference|for bookings|for more|contact|call|whatsapp|agent|broker|payment|down payment|handover|service charge|tenan|vacan|available|price)/i.test(line)){add(details,line);continue}
- if(/^located in/i.test(line)){closing=line;continue}
+ if(/^located in/i.test(line)){if(closing)add(details,closing);closing=line;continue}
  add(section==='community'?community:section==='details'?details:property,line);
  }
  for(const line of (input.features||'').split('\n').filter(Boolean))add(property,line);
