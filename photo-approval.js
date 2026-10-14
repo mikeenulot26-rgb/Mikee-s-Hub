@@ -10,7 +10,7 @@ async function showNextApproval(){
  await edit(approvalBatch[0]);$('editPreset').value=approvalSettings.preset;$('editIntensity').value=approvalSettings.intensity;$('editFit').value=approvalSettings.fit;await updatePreview();$('photoApprovalHint').textContent='Photo '+(photos.length-approvalBatch.length+1)+' of '+photos.length+' · review before approving. Originals and export dimensions stay unchanged.';
 }
 const previousApprovePhoto=$('savePhoto').onclick;
-$('savePhoto').onclick=async()=>{const id=editing?.id,p=photos.find(p=>p.id===id),before=p?.enhancementHistory?.length||0;const b=$('savePhoto');b.disabled=true;try{await previousApprovePhoto();if(approvalBatch.length&&(p.enhancementHistory?.length||0)>before){approvalBatch.shift();await showNextApproval()}}finally{b.disabled=false}};
+$('savePhoto').onclick=async()=>{const id=editing?.id,p=photos.find(p=>p.id===id),before=p?.enhancementHistory?.length||0;const b=$('savePhoto');b.disabled=true;try{await previousApprovePhoto();if(approvalBatch.length&&!$('editDialog').open&&(p.enhancementHistory?.length||0)>before){approvalBatch.shift();await showNextApproval()}}finally{b.disabled=false}};
 $('skipPhotoApproval').onclick=async()=>{$('editDialog').close();approvalBatch.shift();await showNextApproval()};
 $('closeDialog').onclick=()=>{approvalBatch=[];approvalSettings=null;$('editDialog').close();toast('Unapproved photo changes discarded.')};
 $('editDialog').addEventListener('cancel',()=>{approvalBatch=[];approvalSettings=null});
