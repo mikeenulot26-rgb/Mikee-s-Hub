@@ -30,3 +30,29 @@ document.addEventListener('DOMContentLoaded',()=>{
  };for(const[id,path]of Object.entries(icons)){const b=document.getElementById(id);b.innerHTML='<svg viewBox="0 0 24 24" width="19" height="19" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">'+path+'</svg>'}
  document.querySelectorAll('.cardtitle').forEach(e=>{if(e.firstChild?.nodeType===3)e.firstChild.textContent=''});
 });
+
+document.addEventListener('DOMContentLoaded',()=>{
+ const sidebar=document.getElementById('workspaceSidebar'),toggle=document.getElementById('sidebarToggle'),backdrop=document.getElementById('sidebarBackdrop'),mobile=matchMedia('(max-width:850px)');
+ function setSidebar(open,restoreFocus=false){
+  const expanded=mobile.matches&&open;
+  document.body.classList.toggle('sidebar-open',expanded);
+  toggle.setAttribute('aria-expanded',String(expanded));
+  toggle.setAttribute('aria-label',expanded?'Close navigation':'Open navigation');
+  backdrop.hidden=!expanded;sidebar.inert=mobile.matches&&!expanded;
+  if(expanded)sidebar.querySelector('.navlinks .nav.active, .navlinks .nav')?.focus();
+  else if(restoreFocus)toggle.focus();
+ }
+ toggle.addEventListener('click',()=>setSidebar(!document.body.classList.contains('sidebar-open')));
+ backdrop.addEventListener('click',()=>setSidebar(false,true));
+ sidebar.addEventListener('click',event=>{if(event.target.closest('[data-page]')&&mobile.matches)setSidebar(false,true)});
+ document.addEventListener('keydown',event=>{
+  if(!mobile.matches||!document.body.classList.contains('sidebar-open'))return;
+  if(event.key==='Escape'){event.preventDefault();setSidebar(false,true)}
+  if(event.key==='Tab'){
+   const items=[...sidebar.querySelectorAll('button:not([disabled])')],first=items[0],last=items[items.length-1];
+   if(event.shiftKey&&document.activeElement===first){event.preventDefault();last.focus()}
+   else if(!event.shiftKey&&document.activeElement===last){event.preventDefault();first.focus()}
+  }
+ });
+ mobile.addEventListener('change',()=>setSidebar(false));setSidebar(false);
+});
