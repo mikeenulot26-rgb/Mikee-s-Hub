@@ -1,15 +1,53 @@
 .mt-tools-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:26px;margin:30px 0}.mt-tool-card{text-align:left;background:var(--surface);color:var(--ink);border:1px solid var(--line);border-radius:16px;padding:30px;box-shadow:0 5px 20px #17283308;min-height:240px;transition:transform .16s,box-shadow .16s}.mt-tool-card:hover{transform:translateY(-3px);box-shadow:0 10px 28px #17283312}.mt-tool-icon{width:58px;height:58px;display:grid;place-items:center;background:var(--elevated);border-radius:12px;color:#476779;font-size:28px;margin-bottom:22px}.mt-tool-card h2{font-size:22px;margin:0 0 10px}.mt-tool-card p{font-size:17px;line-height:1.65;color:var(--muted);margin:0}.mt-editor{display:grid;grid-template-columns:minmax(300px,1fr) minmax(300px,1fr);gap:50px;align-items:start}.mt-controls h2{font-size:20px}.mt-controls hr{border:0;border-top:1px solid var(--line);margin:26px 0}.mt-preview{position:sticky;top:28px;text-align:center}.mt-preview canvas{width:min(100%,450px);height:auto;border-radius:14px;box-shadow:0 10px 32px #10202018;touch-action:none;cursor:grab}.mt-photo-choices{display:flex;overflow-x:auto;gap:10px;margin:18px 0}.mt-photo-choices button{width:105px;height:82px;flex:none;padding:0;overflow:hidden;border:3px solid transparent}.mt-photo-choices img{width:100%;height:100%;object-fit:cover}.mt-photo-choices .selected{border-color:#6485ff}.mt-history-row{display:flex;align-items:center;gap:18px;padding:22px 0;border-bottom:1px solid var(--line);flex-wrap:wrap}.mt-history-row>div{flex:1;min-width:200px}.mt-history-row strong{font-size:19px}.mt-history-row p{color:var(--muted);font-size:15px}.mt-controls label{font-size:16px}.mt-controls input,.mt-controls textarea,.mt-controls select{font-size:17px}.mt-editor[hidden],.mt-tools-grid[hidden]{display:none!important}@media(max-width:1000px){.mt-tools-grid{grid-template-columns:repeat(2,minmax(0,1fr))}.mt-editor{gap:24px}}@media(max-width:700px){.mt-tools-grid{grid-template-columns:1fr}.mt-tool-card{min-height:190px;padding:24px}.mt-editor{grid-template-columns:1fr}.mt-preview{position:static;order:-1}.mt-preview canvas{max-height:60vh;width:auto;max-width:100%}.mt-controls .toolbar{flex-wrap:wrap}}@media(prefers-reduced-motion:reduce){.mt-tool-card{transition:none}}
-/* Gentle card elevation for mouse/trackpad interaction. */
-@media (hover:hover) and (pointer:fine){
- :is(.mt-tool-card,.referencegrid>.schedulecard,.scheduleblock,.photo,.property-media,#noteList>.record,.myday-hero,#insights>.panel){transition:transform 240ms cubic-bezier(.2,.7,.2,1),box-shadow 240ms ease;transform-origin:center}
- :is(.mt-tool-card,.referencegrid>.schedulecard,.scheduleblock,.photo,.property-media,#noteList>.record,.myday-hero,#insights>.panel):not(:has(:focus-visible)):hover{transform:translateY(-3px) scale(1.008);box-shadow:0 12px 30px rgba(24,48,75,.12)}
- html[data-theme=dark] :is(.mt-tool-card,.referencegrid>.schedulecard,.scheduleblock,.photo,.property-media,#noteList>.record,.myday-hero,#insights>.panel):hover{box-shadow:0 14px 32px rgba(0,0,0,.28)}
+
+/* Warm ivory, deep teal and restrained peach/lilac accents. */
+:root{--ink:#203b3b;--muted:#617774;--line:#dce6e1;--paper:#f5f4ef;--green:#167568;--surface:#fffefa;--elevated:#e7eee8;--shadow:0 8px 28px #173f3510;--nav-hover:#e9efea;--nav-active:#dcece4;--hero-end:#e2eee5;--peach:#fae9db;--lilac:#eee8f5}
+html[data-theme=dark]{--ink:#edf5ef;--muted:#a4beb5;--line:#324840;--paper:#101e1b;--green:#7bd3ba;--surface:#182c26;--elevated:#233d33;--nav-hover:#213b32;--nav-active:#2a493c;--hero-end:#233f33;--peach:#43382d;--lilac:#373248}
+body>.workspace-sidebar.topnav{background:var(--surface);scrollbar-width:thin;scrollbar-color:var(--line) transparent}
+.workspace-topbar{background:var(--paper)}
+.workspace-sidebar .brandicon{color:var(--green);background:var(--nav-active)}
+.workspace-sidebar .navlinks>.nav{transition:background-color 280ms ease,color 280ms ease,transform 320ms cubic-bezier(.22,1,.36,1),box-shadow 280ms ease}
+.workspace-sidebar .navlinks>.nav.active{background:var(--nav-active);color:var(--green);box-shadow:inset 3px 0 var(--green)}
+.workspace-sidebar .navlinks>.nav:hover{background:var(--nav-hover);color:var(--ink)}
+.myday-hero{background:linear-gradient(115deg,var(--surface),var(--hero-end));border-color:var(--line);box-shadow:0 8px 32px #173f3506}
+#dayProgressRing{background:conic-gradient(var(--green) var(--day-progress),var(--line) 0)}
+.myday-next>.eyebrow{color:var(--green)}
+.primary{background:#167568;border-color:#167568;color:#fff}
+.primary:hover{background:#105f55;border-color:#105f55}
+html[data-theme=dark] .primary{background:#267c66;border-color:#267c66;color:#fff}
+html[data-theme=dark] .primary:hover{background:#309478;border-color:#309478}
+.scheduleblock.pastel0{background:#dfede5!important}
+.scheduleblock.pastel1{background:var(--peach)!important}
+.scheduleblock.pastel2{background:var(--lilac)!important}
+html[data-theme=dark] .scheduleblock.pastel0{background:#24483c!important}
+html[data-theme=dark] .scheduleblock.pastel1{background:var(--peach)!important}
+html[data-theme=dark] .scheduleblock.pastel2{background:var(--lilac)!important}
+.monthgrid .today,html[data-theme=dark] .monthgrid .today{background:#167568;color:white}
+.monthgrid .selecteddate:not(.today){background:var(--nav-active);color:var(--green)}
+.week-day.is-today{border-color:var(--green);box-shadow:inset 0 3px var(--green)}
+.week-entry{border-left-color:var(--green)}
+.clean-taskrow>input{accent-color:var(--green)}
+.mt-tool-icon{color:#167568;background:#e0eee5}
+.mt-tool-card:nth-child(2) .mt-tool-icon{background:#fae9db;color:#925d35}
+.mt-tool-card:nth-child(3) .mt-tool-icon{background:#eee8f5;color:#75608e}
+html[data-theme=dark] .mt-tool-icon{background:#24483c;color:#a0dfc6}
+html[data-theme=dark] .mt-tool-card:nth-child(2) .mt-tool-icon{background:#43382d;color:#e7bd93}
+html[data-theme=dark] .mt-tool-card:nth-child(3) .mt-tool-icon{background:#373248;color:#cfb9e7}
+.mt-photo-choices .selected{border-color:var(--green)}
+input:focus,select:focus,textarea:focus{outline-color:#16756855;border-color:var(--green)}
+button:focus-visible,summary:focus-visible,input:focus-visible,select:focus-visible,textarea:focus-visible{outline-color:var(--green)}
+/* Steady hover: avoid lifting a panel and its child at the same time. */
+@media(hover:hover) and (pointer:fine) and (prefers-reduced-motion:no-preference){
+ .workspace-sidebar .navlinks>.nav:hover{transform:translateX(3px)}
+ :is(.mt-tool-card,.scheduleblock,.photo,.property-media,#noteList>.record){transform-origin:center;transition:transform 360ms cubic-bezier(.22,1,.36,1),box-shadow 360ms ease,background-color 280ms ease,border-color 280ms ease}
+ :is(.mt-tool-card,.scheduleblock,.photo,.property-media,#noteList>.record):hover{transform:translateY(-2px) scale(1.004);box-shadow:0 10px 24px #173f3514}
+ html[data-theme=dark] :is(.mt-tool-card,.scheduleblock,.photo,.property-media,#noteList>.record):hover{box-shadow:0 10px 24px #0003}
  .mt-tool-card:disabled:hover{transform:none;box-shadow:none}
 }
-@media (prefers-reduced-motion:reduce){
- :is(.mt-tool-card,.referencegrid>.schedulecard,.scheduleblock,.photo,.property-media,#noteList>.record,.myday-hero,#insights>.panel),:is(.mt-tool-card,.referencegrid>.schedulecard,.scheduleblock,.photo,.property-media,#noteList>.record,.myday-hero,#insights>.panel):hover{transform:none!important;transition:none!important}
-}
-/* Avoid sticky hover elevation on touch screens. */
-@media (hover:none),(pointer:coarse){
+@media(hover:none),(pointer:coarse){
  .mt-tool-card:hover{transform:none;box-shadow:0 5px 20px #17283308}
+}
+@media(prefers-reduced-motion:reduce){
+ :is(.mt-tool-card,.scheduleblock,.photo,.property-media,#noteList>.record,.workspace-sidebar .navlinks>.nav),
+ :is(.mt-tool-card,.scheduleblock,.photo,.property-media,#noteList>.record,.workspace-sidebar .navlinks>.nav):hover{transform:none!important;transition:none!important}
 }
