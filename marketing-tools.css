@@ -51,3 +51,30 @@ button:focus-visible,summary:focus-visible,input:focus-visible,select:focus-visi
  :is(.mt-tool-card,.scheduleblock,.photo,.property-media,#noteList>.record,.workspace-sidebar .navlinks>.nav),
  :is(.mt-tool-card,.scheduleblock,.photo,.property-media,#noteList>.record,.workspace-sidebar .navlinks>.nav):hover{transform:none!important;transition:none!important}
 }
+
+/* Monochrome workspace; property photos and exported branding keep their colors. */
+:root{--ink:#202020;--muted:#6b6b6b;--line:#e2e2e2;--paper:#f5f5f5;--green:#202020;--surface:#fff;--elevated:#ededed;--shadow:0 8px 28px #0000000a;--nav-hover:#f0f0f0;--nav-active:#e8e8e8;--hero-end:#eaeaea;--peach:#ededed;--lilac:#e6e6e6}
+html[data-theme=dark]{--ink:#f3f3f3;--muted:#aaa;--line:#353535;--paper:#111;--green:#eee;--surface:#1b1b1b;--elevated:#292929;--nav-hover:#292929;--nav-active:#333;--hero-end:#272727;--peach:#303030;--lilac:#282828}
+.primary,.primary:hover{background:#202020;border-color:#202020;color:#fff}
+.primary:hover{background:#3d3d3d;border-color:#3d3d3d}
+html[data-theme=dark] .primary{background:#eee;border-color:#eee;color:#171717}
+html[data-theme=dark] .primary:hover{background:#d4d4d4;border-color:#d4d4d4;color:#171717}
+.scheduleblock.pastel0,.scheduleblock.pastel1,.scheduleblock.pastel2{background:var(--elevated)!important}
+html[data-theme=dark] .scheduleblock.pastel0,html[data-theme=dark] .scheduleblock.pastel1,html[data-theme=dark] .scheduleblock.pastel2{background:var(--elevated)!important}
+.monthgrid .today,html[data-theme=dark] .monthgrid .today{background:var(--ink);color:var(--surface)}
+.monthgrid .selecteddate:not(.today),html[data-theme=dark] .monthgrid .selecteddate:not(.today){background:var(--nav-active);color:var(--ink)}
+.monthgrid .hasEvent:after{background:var(--muted)}
+.mt-tool-card .mt-tool-icon,.mt-tool-card:nth-child(2) .mt-tool-icon,.mt-tool-card:nth-child(3) .mt-tool-icon,
+html[data-theme=dark] .mt-tool-card .mt-tool-icon,html[data-theme=dark] .mt-tool-card:nth-child(2) .mt-tool-icon,html[data-theme=dark] .mt-tool-card:nth-child(3) .mt-tool-icon{background:var(--elevated);color:var(--ink)}
+input:focus,select:focus,textarea:focus{outline-color:#8886;border-color:var(--muted)}
+.badge,.statusbadge,.priority.high,.priority.normal,.priority.low,.tag,.tag.teal,
+html[data-theme=dark] .statusbadge,html[data-theme=dark] .priority.high,html[data-theme=dark] .priority.normal,html[data-theme=dark] .priority.low{background:var(--elevated);color:var(--ink)}
+#cloudStatus,.hubstats strong,.eyebrow{color:var(--muted)}
+.week-entry,.week-entry.event{border-left-color:var(--muted)}
+.avatar,.tinyavatar,.projecticon{background:var(--elevated);color:var(--ink)}
+input[type=checkbox],progress{accent-color:var(--ink)}
+.scheduleblock:hover,html[data-theme=dark] .scheduleblock:hover{filter:none}
+@media(hover:hover) and (pointer:fine) and (prefers-reduced-motion:no-preference){
+ :is(.mt-tool-card,.scheduleblock,.photo,.property-media,#noteList>.record):hover{box-shadow:0 10px 24px #00000012}
+ html[data-theme=dark] :is(.mt-tool-card,.scheduleblock,.photo,.property-media,#noteList>.record):hover{box-shadow:0 10px 24px #0004}
+}
