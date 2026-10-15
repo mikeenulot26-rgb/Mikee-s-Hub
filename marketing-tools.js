@@ -68,12 +68,13 @@ async function mtDraw(d,target){
   const specs=[d.beds?(String(d.beds).toLowerCase()==='studio'?'STUDIO':d.beds+' BED'):'',d.baths?d.baths+' BATHROOM':'',d.area?Number(String(d.area).replace(/,/g,'')).toLocaleString()+' SQ FT':''].filter(Boolean);
   ctx.font='500 19px Arial, sans-serif';
   const widths=specs.map(text=>ctx.measureText(text).width+38),total=widths.reduce((a,b)=>a+b,0)+Math.max(0,specs.length-1)*14;
+  const hasLocation=d.propertyName&&d.location&&d.propertyName!==d.location,priceY=hasLocation?334:291,badgeY=(d.price?priceY:hasLocation?277:234)+32;
   let bx=990-total;ctx.textAlign='center';
-  specs.forEach((text,i)=>{mtRounded(ctx,bx,275,widths[i],52,9);ctx.fillStyle='rgba(255,255,255,.09)';ctx.fill();ctx.strokeStyle='rgba(255,255,255,.55)';ctx.lineWidth=1;ctx.stroke();ctx.fillStyle=white;ctx.fillText(text,bx+widths[i]/2,308);bx+=widths[i]+14});
+  specs.forEach((text,i)=>{mtRounded(ctx,bx,badgeY,widths[i],52,9);ctx.fillStyle='rgba(255,255,255,.09)';ctx.fill();ctx.strokeStyle='rgba(255,255,255,.55)';ctx.lineWidth=1;ctx.stroke();ctx.fillStyle=white;ctx.fillText(text,bx+widths[i]/2,badgeY+33);bx+=widths[i]+14});
   ctx.textAlign='right';
-  designText(ctx,d.propertyName||d.location||'Property details',990,375,780,29,white,'400');
-  if(d.propertyName&&d.location&&d.propertyName!==d.location)designText(ctx,d.location,990,418,780,25,white,'400');
-  if(d.price)designText(ctx,'AED '+Number(d.price).toLocaleString(),990,d.propertyName&&d.location&&d.propertyName!==d.location?475:437,780,40,white,'500');
+  designText(ctx,d.propertyName||d.location||'Property details',990,234,780,29,white,'400');
+  if(d.propertyName&&d.location&&d.propertyName!==d.location)designText(ctx,d.location,990,277,780,25,white,'400');
+  if(d.price)designText(ctx,'AED '+Number(d.price).toLocaleString(),990,priceY,780,40,white,'500');
   if(!photo){ctx.textAlign='center';designText(ctx,'Choose a property photo',540,h*.48,800,35,white,'400')}
   const cx=210,cy=h-310,r=118,head=d.headshotId?await mtImage(d.headshotId):null;
   mtHeadshotRegion={cx,cy,r};ctx.save();ctx.beginPath();ctx.arc(cx,cy,r,0,Math.PI*2);ctx.clip();ctx.fillStyle=white;ctx.fillRect(cx-r,cy-r,2*r,2*r);
