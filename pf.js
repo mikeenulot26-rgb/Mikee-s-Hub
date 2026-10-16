@@ -92,11 +92,11 @@ async function pfRemoteImage(photo){
  const img=new Image();img.src=photo.objectURL;await img.decode();return img;
 }
 function pfRemoteGallery(){
- let gallery=$('pfRemoteGallery');if(!gallery){gallery=el('div','panel');gallery.id='pfRemoteGallery';$('pfReviewForm').after(gallery)}gallery.replaceChildren();gallery.append(el('h3','','Photos from the public listing'),el('p','muted','These images are from the supplied public page. Click to include/exclude them from review. They are not saved into Marketing unless you choose to import.'));
+ let gallery=$('pfRemoteGallery');if(!gallery){gallery=el('div','panel');gallery.id='pfRemoteGallery';$('pfImageResults').replaceChildren(gallery)}gallery.replaceChildren();gallery.append(el('h3','',pfRemotePhotos.length+' listing images'),el('p','muted','Select thumbnails for a ZIP, or use Download image beneath any photo. Downloads keep the source image format and resolution.'));
  const grid=el('div','pf-photo-picker');gallery.append(grid);
- for(const photo of pfRemotePhotos){const tile=el('button','pf-photo-tile selected'),img=el('img');tile.type='button';img.alt=photo.name;tile.setAttribute('aria-label','Include '+photo.name);tile.setAttribute('aria-pressed','true');tile.onclick=()=>{photo.selected=!photo.selected;tile.classList.toggle('selected',photo.selected);tile.setAttribute('aria-pressed',String(photo.selected))};tile.append(img);grid.append(tile);photo.tile=tile;photo.img=img;}
+ for(const photo of pfRemotePhotos){const tile=el('button','pf-photo-tile selected'),img=el('img');tile.type='button';img.alt=photo.name;tile.setAttribute('aria-label','Select '+photo.name);tile.setAttribute('aria-pressed','true');tile.onclick=()=>{photo.selected=!photo.selected;tile.classList.toggle('selected',photo.selected);tile.setAttribute('aria-pressed',String(photo.selected))};tile.append(img);const card=el('div'),save=button('Download image',()=>pfDownloadOnePhoto(photo,save));save.setAttribute('aria-label','Download '+photo.name);card.append(tile,save);grid.append(card);photo.tile=tile;photo.img=img;}
  let index=0;const worker=async()=>{while(index<pfRemotePhotos.length){const photo=pfRemotePhotos[index++];try{const image=await pfRemoteImage(photo);if(photo.tile.isConnected)photo.img.src=image.src}catch{photo.unavailable=true;if(photo.tile.isConnected)photo.tile.append(el('span','','Photo unavailable'))}}};Promise.all([worker(),worker(),worker()]);
- if(pfRemotePhotos.length){const all=button('Download all images ZIP',()=>pfDownloadPublicPhotos(all,false)),selected=button('Download selected images ZIP',()=>pfDownloadPublicPhotos(selected,true));gallery.append(all,selected,button('Use selected public photos in Marketing',()=>pfImportRemotePhotos().catch(e=>toast(e.message))));}
+ if(pfRemotePhotos.length){const all=button('Download all images ZIP',()=>pfDownloadPublicPhotos(all,false)),selected=button('Download selected images ZIP',()=>pfDownloadPublicPhotos(selected,true));gallery.append(all,selected);}
 }
 async function pfImportRemotePhotos(){
  const selected=pfRemotePhotos.filter(p=>p.selected&&!p.unavailable);if(!selected.length)throw Error('Select accessible public photos first.');let id=$('pfReviewProperty').value;
@@ -124,7 +124,7 @@ async function pfReadPublicLink(runAfter=false){
 }
 
 function initPF(){
- $('pfImportPage').onchange=async e=>{const file=e.target.files[0];if(!file)return;try{if(file.size>10000000)throw Error('Choose an HTML page under 10 MB.');const result=extractPFPage(await file.text());if(!result.ok)throw Error(result.message);pfPopulatePublicResult(result,$('pfReviewLink').value.trim());$('pfLinkStatus').textContent='Saved public page imported. Listing fields and public photo references loaded; no account or lead data was imported.';await pfRunReview()}catch(error){$('pfLinkStatus').textContent=error.message}finally{e.target.value=''}};
+ $('pfImportPage').onchange=async e=>{const file=e.target.files[0];if(!file)return;try{if(file.size>10000000)throw Error('Choose an HTML page under 10 MB.');const result=extractPFPage(await file.text());if(!result.ok)throw Error(result.message);pfPopulatePublicResult(result,$('pfReviewLink').value.trim());$('pfLinkStatus').textContent=pfRemotePhotos.length?pfRemotePhotos.length+' images found. Download individually or as a ZIP below.':'No listing images found in this HTML file.'}catch(error){$('pfLinkStatus').textContent=error.message}finally{e.target.value=''}};
  document.querySelectorAll('[data-pf-tab]').forEach(b=>b.onclick=()=>pfChooseTab(b.dataset.pfTab));
  for(const id of ['pfSearch','pfStatusFilter','pfAgentFilter','pfLocationFilter','pfDateFilter'])$(id).oninput=renderPF;
  $('pfNewListing').onclick=()=>{pfEditing='';$('pfListingForm').reset();pfFormErrors({});$('pfFormTitle').textContent='Add a listing';$('pfReactivation').hidden=true;renderPF()};
@@ -149,4 +149,11 @@ async function pfDownloadPublicPhotos(control,selectedOnly=false){
  download(await C.zip(files),C.safe(pfPublicDetails?.reference||'public-listing')+'_images.zip');
  toast(files.length+' images downloaded'+(failed.length?'; '+failed.length+' unavailable: '+failed.join(', '):'.'));
  }catch(e){toast(e.message)}finally{control.disabled=false;control.textContent=label}
+}
+
+async function pfDownloadOnePhoto(photo,control){
+ const label=control.textContent;control.disabled=true;control.textContent='Preparing…';
+ try{await pfRemoteImage(photo);const extension=photo.blob.type.includes('png')?'png':photo.blob.type.includes('webp')?'webp':'jpg';download(photo.blob,C.safe(photo.name)+'.'+extension)}
+ catch(error){toast('Could not download this image: '+error.message)}
+ finally{control.disabled=false;control.textContent=label}
 }
