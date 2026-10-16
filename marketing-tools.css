@@ -78,3 +78,19 @@ input[type=checkbox],progress{accent-color:var(--ink)}
  :is(.mt-tool-card,.scheduleblock,.photo,.property-media,#noteList>.record):hover{box-shadow:0 10px 24px #00000012}
  html[data-theme=dark] :is(.mt-tool-card,.scheduleblock,.photo,.property-media,#noteList>.record):hover{box-shadow:0 10px 24px #0004}
 }
+
+/* Bell opens an inline inbox; delivery instructions stay in settings. */
+.notification-wrap{position:relative;flex-shrink:0}
+#notifications{position:relative}
+.notification-count{position:absolute;right:-3px;top:-4px;min-width:17px;height:17px;padding:0 4px;border-radius:12px;background:var(--ink);color:var(--surface);font-size:10px;font-weight:700;line-height:17px;border:2px solid var(--paper);box-sizing:content-box}
+.notification-dropdown{position:absolute;top:calc(100% + 14px);right:0;width:min(380px,calc(100vw - 24px));padding:0;background:var(--surface);color:var(--ink);border:1px solid var(--line);border-radius:16px;box-shadow:0 16px 48px #0003;z-index:70;overflow:hidden}
+.notification-heading{display:flex;align-items:center;justify-content:space-between;padding:16px 18px 4px}
+.notification-heading strong{font-size:18px}.notification-heading button{background:transparent;border:0;color:var(--muted);font-size:24px;padding:0 8px;min-height:32px}
+.notification-hint{font-size:13px;color:var(--muted);margin:0;padding:0 18px 14px;border-bottom:1px solid var(--line)}
+.notification-list{max-height:min(440px,60dvh);overflow-y:auto;overscroll-behavior:contain}
+.notification-item{display:flex;flex-direction:column;gap:5px;width:100%;padding:15px 18px;text-align:left;border:0;border-bottom:1px solid var(--line);border-radius:0;background:transparent;color:var(--ink)}
+.notification-item:hover,.notification-item:focus-visible{background:var(--elevated)}
+.notification-kind{font-size:12px;font-weight:650;color:var(--muted)}.notification-item strong{font-size:16px;line-height:1.5;overflow-wrap:anywhere}.notification-item small{font-size:13px;color:var(--muted)}
+.notification-empty{font-size:15px;line-height:1.7;color:var(--muted);padding:24px 18px;margin:0}
+.notification-settings{width:100%;border:0;border-radius:0;background:var(--elevated);color:var(--ink);padding:14px 18px;font-size:14px;text-align:left}
+@media(max-width:600px){.notification-dropdown{position:fixed;top:74px;right:12px;width:calc(100vw - 24px)}}

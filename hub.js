@@ -20,7 +20,7 @@ function noteRow(n){const r=el('div','record'),d=el('div');d.append(el('p','note
 function editProject(p){editingProject=p.id;const f=$('projectForm');for(const k of ['name','description','status','progress','due'])f.elements[k].value=p[k]??'';page('projects');if(!$('projectEditor').open)$('projectEditor').showModal();f.elements.name.focus()}
 function projectRow(p,index,full=false){const r=el('div','projectrow'),icon=el('span','projecticon color'+index%3,'↗'),d=el('button','projectdetails');d.append(el('strong','',p.name),el('small','',`${p.progress||0}% complete · ${p.status}`));const progress=el('progress','project-progress');progress.max=100;progress.value=Number(p.progress)||0;progress.setAttribute('aria-label',p.name+' progress');d.append(progress);if(p.due)d.append(el('small','', 'Due '+p.due));d.onclick=()=>editProject(p);r.append(icon,d,button('⋯',()=>editProject(p)));if(full){if(p.description)d.append(el('p','muted',p.description));r.append(button('Delete',async()=>{if(await confirmAction('Delete this project?')){hubData().projects=hubData().projects.filter(x=>x.id!==p.id);await hubSave()}}))}return r}
 function drawCalendar(h,today){const cal=$('miniCalendar');cal.replaceChildren();$('calendarHeading').textContent=new Intl.DateTimeFormat('en-GB',{month:'long',year:'numeric'}).format(new Date(calendarYear,calendarMonth,15));const grid=el('div','monthgrid');for(const day of ['SUN','MON','TUE','WED','THU','FRI','SAT'])grid.append(el('small','',day));const first=new Date(calendarYear,calendarMonth,1).getDay(),days=new Date(calendarYear,calendarMonth+1,0).getDate();for(let i=0;i<first;i++)grid.append(el('span'));for(let i=1;i<=days;i++){const date=`${calendarYear}-${String(calendarMonth+1).padStart(2,'0')}-${String(i).padStart(2,'0')}`,b=el('button',(date===today?'today ':'')+(date===selectedDay?'selecteddate ':'')+(h.events.some(e=>e.when.startsWith(date))||h.tasks.some(t=>!t.cancelled&&t.due===date)?'hasEvent':''),i);b.setAttribute('aria-label',date);b.onclick=()=>{selectedDay=date;renderHub()};grid.append(b)}cal.append(grid)}
-function renderHub(){renderProfile();const h=hubData(),today=dubaiDate();if(!selectedDay){selectedDay=today;calendarYear=+today.slice(0,4);calendarMonth=+today.slice(5,7)-1}const open=h.tasks.filter(t=>!t.done);$('totalProjects').textContent=h.projects.length;$('totalTasks').textContent=h.tasks.filter(t=>!t.cancelled).length;$('ongoingTasks').textContent=h.tasks.filter(t=>!t.done&&t.status==='In Progress').length;$('completedTasks').textContent=h.tasks.filter(t=>t.done&&!t.cancelled).length;$('dayOverview').textContent=`${open.filter(t=>t.due===today).length} tasks due today · ${h.events.filter(e=>e.when.startsWith(today)).length} scheduled events${open.some(t=>t.due&&t.due<today)?' · '+open.filter(t=>t.due&&t.due<today).length+' overdue':''}`;const hour=+new Intl.DateTimeFormat('en-GB',{timeZone:'Asia/Dubai',hour:'2-digit',hourCycle:'h23'}).format(new Date());$('hubGreeting').textContent=`${hour<12?'Good morning':hour<18?'Good afternoon':'Good evening'}, ${state.profileName||'Mikee'}!`;
+function renderHub(){renderProfile();if(typeof renderNotificationDropdown==='function')renderNotificationDropdown();const h=hubData(),today=dubaiDate();if(!selectedDay){selectedDay=today;calendarYear=+today.slice(0,4);calendarMonth=+today.slice(5,7)-1}const open=h.tasks.filter(t=>!t.done);$('totalProjects').textContent=h.projects.length;$('totalTasks').textContent=h.tasks.filter(t=>!t.cancelled).length;$('ongoingTasks').textContent=h.tasks.filter(t=>!t.done&&t.status==='In Progress').length;$('completedTasks').textContent=h.tasks.filter(t=>t.done&&!t.cancelled).length;$('dayOverview').textContent=`${open.filter(t=>t.due===today).length} tasks due today · ${h.events.filter(e=>e.when.startsWith(today)).length} scheduled events${open.some(t=>t.due&&t.due<today)?' · '+open.filter(t=>t.due&&t.due<today).length+' overdue':''}`;const hour=+new Intl.DateTimeFormat('en-GB',{timeZone:'Asia/Dubai',hour:'2-digit',hourCycle:'h23'}).format(new Date());$('hubGreeting').textContent=`${hour<12?'Good morning':hour<18?'Good afternoon':'Good evening'}, ${state.profileName||'Mikee'}!`;
 for(const id of ['todaySchedule','priorityTasks','taskList','eventList','noteList','dashboardProjects','projectList','insightsList'])$(id).replaceChildren();$('scheduleTitle').textContent=selectedDay===today?"Today's Tasks":new Intl.DateTimeFormat('en-GB',{day:'numeric',month:'short'}).format(new Date(selectedDay+'T12:00Z'));
 const items=[...h.tasks.filter(t=>!t.cancelled&&t.due===selectedDay).map(t=>({time:t.time||'',title:t.title,category:t.done?'Completed':t.category||'Personal',item:t,kind:'task'})),...h.events.filter(e=>e.when.startsWith(selectedDay)).map(e=>({time:e.when.slice(11,16),title:e.title,category:'Event',item:e,kind:'event'}))].sort((a,b)=>(a.time||'99').localeCompare(b.time||'99'));items.forEach((item,i)=>{const r=el('div','scheduleitem'),time=el('span','scheduletime',item.time?new Intl.DateTimeFormat('en-US',{hour:'numeric',minute:'2-digit',timeZone:'Asia/Dubai'}).format(new Date(selectedDay+'T'+item.time+':00+04:00')):'Any time'),block=el('button','scheduleblock pastel'+i%3);block.append(el('strong',item.kind==='task'&&item.item.done?'completed':'',item.title),el('small','',item.category),el('span','rowarrow','›'));block.onclick=()=>item.kind==='task'?editTask(item.item):editEvent(item.item);if(item.kind==='task'&&!item.item.done)block.insertBefore(el('span','badge priority '+(item.item.priority||'Normal').toLowerCase(),item.item.priority||'Normal'),block.lastChild);r.append(time,block);$('todaySchedule').append(r)});hubEmpty($('todaySchedule'),'No tasks or events scheduled for this date.');h.tasks.filter(t=>!t.cancelled&&(t.due===today||t.pfListingId&&!t.done&&t.due<today)).sort((a,b)=>Number(a.done)-Number(b.done)||(a.time||'99:99').localeCompare(b.time||'99:99')).forEach(t=>$('priorityTasks').append(taskRow(t)));hubEmpty($('priorityTasks'),'No tasks due today.');const filter=$('taskFilter').value;h.tasks.filter(t=>!t.cancelled&&(filter==='all'||(filter==='done'?t.done:!t.done))).forEach(t=>{$('taskList').append(taskRow(t))});hubEmpty($('taskList'),'No tasks in this view.');[...h.events].sort((a,b)=>a.when.localeCompare(b.when)).forEach(e=>$('eventList').append(eventRow(e)));hubEmpty($('eventList'),'No events saved.');const q=$('noteSearch').value.toLowerCase();[...h.notes].reverse().filter(n=>n.body.toLowerCase().includes(q)).forEach(n=>$('noteList').append(noteRow(n)));hubEmpty($('noteList'),'No matching notes.');h.projects.filter(p=>p.status==='Active').forEach((p,i)=>$('dashboardProjects').append(projectRow(p,i)));hubEmpty($('dashboardProjects'),'No active projects.');h.projects.forEach((p,i)=>$('projectList').append(projectRow(p,i,true)));hubEmpty($('projectList'),'Create your first project.');drawCalendar(h,today);if(typeof renderMyDay==='function')renderMyDay();if(typeof renderWeekBoard==='function')renderWeekBoard();if(typeof renderInsights==='function'&&!$('insights').hidden)renderInsights().catch(e=>toast(e.message))}
 $('quickTask').onclick=()=>{editingTask='';$('taskForm').reset();$('taskForm').elements.due.required=false;page('tasks');$('taskForm').elements.title.focus()};document.querySelectorAll('[data-hub-page]').forEach(b=>b.onclick=()=>page(b.dataset.hubPage));$('taskFilter').onchange=renderHub;$('noteSearch').oninput=renderHub;
@@ -85,7 +85,7 @@ function reminderSettings(){utility('Reminders & notifications',[
 'Email reminders are not connected yet.'
 ]);const controls=el('div','settingsgroup');controls.append(button('Enable background notifications',enableBrowserAlerts),button('Send test notification',testBackgroundReminder),button('Disable on this device',disableBackgroundReminders),button('Download calendar reminders',exportReminderCalendar));$('utilityBody').append(controls)}
 $('settings').onclick=()=>{utility('Workspace settings',['Timezone: Asia/Dubai','Your profile photo is saved in your private workspace.']);const controls=el('div','settingsgroup');controls.append(button('Toggle light / dark mode',()=>setTheme(document.documentElement.dataset.theme==='dark'?'light':'dark')),button('Reminder delivery',reminderSettings));$('utilityBody').append(controls)};
-$('notifications').onclick=reminderSettings;
+$('notifications').onclick=toggleNotificationDropdown;
 if('serviceWorker' in navigator)navigator.serviceWorker.register('/sw.js').catch(()=>console.warn('Notification worker could not start.'));
 
 $('profile').onclick=()=>{
@@ -124,3 +124,55 @@ async function stopTaskSeries(series){
  const h=hubData(),before=JSON.parse(JSON.stringify(h));series.active=false;h.tasks=h.tasks.filter(t=>t.seriesId!==series.id||t.done||t.due<=dubaiDate());try{await hubSave();toast('Task stopped repeating.')}catch(e){state.hub=before;renderHub();toast(e.message)}
 }
 $('taskRepeat').onchange=()=>{$('taskForm').elements.due.required=$('taskRepeat').value!=='none'};
+
+function notificationItems(h,now=new Date()){
+ const today=new Intl.DateTimeFormat('en-CA',{timeZone:'Asia/Dubai',year:'numeric',month:'2-digit',day:'2-digit'}).format(now);
+ const tasks=h.tasks.filter(t=>!t.done&&!t.cancelled&&t.due&&t.due<=today).map(t=>({
+  kind:'task',id:t.id,title:t.title,item:t,
+  label:t.due<today?'Overdue':t.time?'Today · '+t.time:'Due today',
+  detail:t.due<today?t.due+(t.time?' · '+t.time:''):(t.category||'Task'),
+  sort:t.due+'T'+(t.time||'23:59')
+ }));
+ const events=h.events.filter(e=>!e.cancelled&&e.when?.startsWith(today)&&new Date(e.when+':00+04:00').getTime()>=now.getTime()-15*60000).map(e=>({
+  kind:'event',id:e.id,title:e.title,item:e,label:'Event · '+e.when.slice(11,16),detail:'Today · Dubai time',sort:e.when
+ }));
+ return [...tasks,...events].sort((a,b)=>a.sort.localeCompare(b.sort));
+}
+function ensureNotificationDropdown(){
+ if($('notificationDropdown'))return $('notificationDropdown');
+ const bell=$('notifications'),wrap=el('div','notification-wrap'),panel=el('div','notification-dropdown');
+ bell.before(wrap);wrap.append(bell,panel);panel.id='notificationDropdown';panel.hidden=true;
+ panel.setAttribute('role','region');panel.setAttribute('aria-label','Notifications');
+ bell.setAttribute('aria-controls',panel.id);bell.setAttribute('aria-expanded','false');
+ const head=el('div','notification-heading');head.append(el('strong','','Notifications'));
+ const close=button('×',()=>closeNotificationDropdown(true));close.setAttribute('aria-label','Close notifications');head.append(close);
+ const hint=el('p','notification-hint','Your due tasks and upcoming events · Dubai time'),list=el('div','notification-list');list.id='notificationList';
+ const settings=button('Notification settings',()=>{closeNotificationDropdown();reminderSettings()});settings.className='notification-settings';
+ panel.append(head,hint,list,settings);return panel;
+}
+function renderNotificationDropdown(){
+ const panel=ensureNotificationDropdown(),items=notificationItems(hubData()),list=$('notificationList'),bell=$('notifications');
+ list.replaceChildren();bell.setAttribute('aria-label','Notifications'+(items.length?' · '+items.length+' due or upcoming':''));
+ let count=$('notificationCount');
+ if(!count){count=el('span','notification-count');count.id='notificationCount';count.setAttribute('aria-hidden','true');bell.append(count)}
+ count.hidden=!items.length;count.textContent=items.length>99?'99+':String(items.length);
+ for(const item of items){
+  const row=button('',()=>{closeNotificationDropdown();if(item.kind==='task')editTask(item.item);else editEvent(item.item)});
+  row.className='notification-item';row.append(el('span','notification-kind',item.label),el('strong','',item.title),el('small','',item.detail));list.append(row);
+ }
+ if(!items.length)list.append(el('p','notification-empty','You’re all caught up. No tasks due or events coming up today.'));
+ return panel;
+}
+function closeNotificationDropdown(restoreFocus=false){
+ const panel=$('notificationDropdown');if(panel)panel.hidden=true;
+ $('notifications').setAttribute('aria-expanded','false');if(restoreFocus)$('notifications').focus();
+}
+function toggleNotificationDropdown(){
+ const panel=ensureNotificationDropdown(),open=panel.hidden;
+ if(open){renderNotificationDropdown();panel.hidden=false;$('notifications').setAttribute('aria-expanded','true')}
+ else closeNotificationDropdown();
+}
+document.addEventListener('click',event=>{if(!event.target.closest('.notification-wrap'))closeNotificationDropdown()});
+document.addEventListener('keydown',event=>{const panel=$('notificationDropdown');if(event.key==='Escape'&&panel&&!panel.hidden){event.preventDefault();closeNotificationDropdown(true)}});
+document.addEventListener('focusin',event=>{if(!event.target.closest('.notification-wrap'))closeNotificationDropdown()});
+setInterval(()=>{if(document.visibilityState==='visible'&&typeof state!=='undefined'&&state.hub)renderNotificationDropdown()},60000);
