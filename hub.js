@@ -138,6 +138,16 @@ function notificationItems(h,now=new Date()){
  }));
  return [...tasks,...events].sort((a,b)=>a.sort.localeCompare(b.sort));
 }
+function notificationKey(item){return JSON.stringify([item.kind,item.id,item.item.title,item.item.due||item.item.when,item.item.time||''])}
+function visibleNotifications(h){const dismissed=h.notificationDismissed;const keys=new Set(dismissed?.day===dubaiDate()?dismissed.keys:[]);return notificationItems(h).filter(item=>!keys.has(notificationKey(item)))}
+async function clearNotifications(){
+ const h=hubData(),items=visibleNotifications(h);if(!items.length)return;
+ const previous=h.notificationDismissed,keys=previous?.day===dubaiDate()?previous.keys:[];
+ h.notificationDismissed={day:dubaiDate(),keys:[...new Set([...keys,...items.map(notificationKey)])]};
+ const clear=$('clearNotifications');clear.disabled=true;
+ try{await hubSave({redraw:false});renderNotificationDropdown();toast('Notifications cleared. Your tasks and reminders are unchanged.')}
+ catch(error){h.notificationDismissed=previous;renderNotificationDropdown();toast('Could not clear notifications: '+error.message)}
+}
 function ensureNotificationDropdown(){
  if($('notificationDropdown'))return $('notificationDropdown');
  const bell=$('notifications'),wrap=el('div','notification-wrap'),panel=el('div','notification-dropdown');
@@ -145,13 +155,15 @@ function ensureNotificationDropdown(){
  panel.setAttribute('role','region');panel.setAttribute('aria-label','Notifications');
  bell.setAttribute('aria-controls',panel.id);bell.setAttribute('aria-expanded','false');
  const head=el('div','notification-heading');head.append(el('strong','','Notifications'));
+ const clear=button('Clear',clearNotifications);clear.id='clearNotifications';clear.style.fontSize='13px';clear.style.marginLeft='auto';clear.setAttribute('aria-label','Clear listed notifications');head.append(clear);
  const close=button('×',()=>closeNotificationDropdown(true));close.setAttribute('aria-label','Close notifications');head.append(close);
  const hint=el('p','notification-hint','Your due tasks and upcoming events · Dubai time'),list=el('div','notification-list');list.id='notificationList';
  const settings=button('Notification settings',()=>{closeNotificationDropdown();reminderSettings()});settings.className='notification-settings';
  panel.append(head,hint,list,settings);return panel;
 }
 function renderNotificationDropdown(){
- const panel=ensureNotificationDropdown(),items=notificationItems(hubData()),list=$('notificationList'),bell=$('notifications');
+ const panel=ensureNotificationDropdown(),items=visibleNotifications(hubData()),list=$('notificationList'),bell=$('notifications');
+ $('clearNotifications').disabled=!items.length;
  list.replaceChildren();bell.setAttribute('aria-label','Notifications'+(items.length?' · '+items.length+' due or upcoming':''));
  let count=$('notificationCount');
  if(!count){count=el('span','notification-count');count.id='notificationCount';count.setAttribute('aria-hidden','true');bell.append(count)}
@@ -160,7 +172,7 @@ function renderNotificationDropdown(){
   const row=button('',()=>{closeNotificationDropdown();if(item.kind==='task')editTask(item.item);else editEvent(item.item)});
   row.className='notification-item';row.append(el('span','notification-kind',item.label),el('strong','',item.title),el('small','',item.detail));list.append(row);
  }
- if(!items.length)list.append(el('p','notification-empty','You’re all caught up. No tasks due or events coming up today.'));
+ if(!items.length)list.append(el('p','notification-empty','You’re all caught up. No new notifications.'));
  return panel;
 }
 function closeNotificationDropdown(restoreFocus=false){
