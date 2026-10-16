@@ -152,7 +152,7 @@ async function listProperties(){
   if(hero){const thumb=document.createElement('img');thumb.className='property-thumbnail';thumb.alt=p.name;thumb.loading='lazy';r.append(thumb);hydratePhoto(hero).then(()=>{if(thumb.isConnected)thumb.src=photoURL(hero)}).catch(()=>{thumb.alt='Photo unavailable';thumb.title='Open Studio to retry loading this photo.'})}
   const d=document.createElement('div'),title=document.createElement('strong'),meta=document.createElement('p'),detail=document.createElement('p');meta.className=detail.className='property-meta';title.textContent=p.name;
   const agent=state.agents.find(agent=>agent.id===p.agent);
-  meta.textContent=[p.community,p.category,p.beds&&(p.beds+' bedrooms'),p.area&&(Number(p.area).toLocaleString()+' sq ft'),p.price&&('AED '+Number(p.price).toLocaleString())].filter(Boolean).join(' · ');
+  meta.textContent=[p.community,p.category,p.propertyType,p.beds&&(p.beds+' bedrooms'),p.area&&(Number(p.area).toLocaleString()+' sq ft'),p.price&&('AED '+Number(p.price).toLocaleString())].filter(Boolean).join(' · ');
   detail.textContent=[media.length+' photos',agent?.name,p.code].filter(Boolean).join(' · ');
   d.append(title,meta,detail);
   const date=p.updatedAt||p.created;if(date&&!Number.isNaN(new Date(date).getTime())){const stamp=document.createElement('p');stamp.className='property-meta';stamp.textContent=(p.updatedAt?'Updated ':'Added ')+new Intl.DateTimeFormat('en-GB',{dateStyle:'medium',timeZone:'Asia/Dubai'}).format(new Date(date));d.append(stamp)}
