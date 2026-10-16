@@ -94,3 +94,15 @@ input[type=checkbox],progress{accent-color:var(--ink)}
 .notification-empty{font-size:15px;line-height:1.7;color:var(--muted);padding:24px 18px;margin:0}
 .notification-settings{width:100%;border:0;border-radius:0;background:var(--elevated);color:var(--ink);padding:14px 18px;font-size:14px;text-align:left}
 @media(max-width:600px){.notification-dropdown{position:fixed;top:74px;right:12px;width:calc(100vw - 24px)}}
+
+/* Pastel agenda cards within the monochrome workspace. */
+#todaySchedule .scheduleblock.pastel0{background:#e4edff!important;color:#243047!important}
+#todaySchedule .scheduleblock.pastel1{background:#e3f1e9!important;color:#243d32!important}
+#todaySchedule .scheduleblock.pastel2{background:#efe6f7!important;color:#42334d!important}
+#todaySchedule .scheduleblock small{color:#536075!important}
+#todaySchedule .scheduleblock .badge{background:#ffffff70;color:inherit}
+html[data-theme=dark] #todaySchedule .scheduleblock.pastel0{background:#2b3e60!important;color:#e4edff!important}
+html[data-theme=dark] #todaySchedule .scheduleblock.pastel1{background:#29483a!important;color:#e3f1e9!important}
+html[data-theme=dark] #todaySchedule .scheduleblock.pastel2{background:#453453!important;color:#efe6f7!important}
+html[data-theme=dark] #todaySchedule .scheduleblock small{color:#d1d9e3!important}
+html[data-theme=dark] #todaySchedule .scheduleblock .badge{background:#ffffff14;color:inherit}
