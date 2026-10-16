@@ -3,13 +3,36 @@ let pfLoadedUrl='',pfRemotePhotos=[],pfPublicDetails=null,pfLinkLoading=null;
 let pfTab='listings',pfEditing='',pfReviewListing='',pfReviewPhotos=[],pfReviewInput=null,pfFindings=[];
 function pfData(){state.pf ||= {listings:[]};return state.pf}
 function pfAgentName(id){return state.agents.find(a=>a.id===id)?.name||''}
-async function pfCommit(change){const before=structuredClone({pf:pfData(),hub:hubData()});try{change();PFCore.reconcile(pfData(),hubData());await persist({syncMedia:false});renderHub();renderPF()}catch(e){state.pf=before.pf;state.hub=before.hub;await tx('records','readwrite',s=>s.put(state,'workspace'));throw e}}
+async function pfCommit(change){const before=structuredClone({pf:pfData(),hub:hubData(),properties:state.properties});try{change();PFCore.reconcile(pfData(),hubData());await persist({syncMedia:false});renderHub();renderPF()}catch(e){state.pf=before.pf;state.hub=before.hub;state.properties=before.properties;await tx('records','readwrite',s=>s.put(state,'workspace'));throw e}}
 function pfLink(url,label='Open public listing'){const a=el('a','secondary',label);a.href=url;a.target='_blank';a.rel='noopener noreferrer';return a}
 function pfSelectOptions(select,selected=''){select.replaceChildren(new Option('Select agent (optional)',''));for(const a of state.agents.filter(a=>!a.archived))select.add(new Option(a.name,a.id));select.value=selected}
 function pfChooseTab(tab){pfTab=tab;document.querySelectorAll('[data-pf-tab]').forEach(b=>{b.classList.toggle('active',b.dataset.pfTab===tab);b.setAttribute('aria-pressed',String(b.dataset.pfTab===tab))});for(const t of ['listings','review','renewals'])$('pf-'+t).hidden=t!==tab;renderPF()}
-function pfEditListing(l){pfEditing=l.id;const form=$('pfListingForm');for(const key of ['name','reference','location','link','published','status'])form.elements[key].value=l[key]||'';pfSelectOptions(form.elements.agent,l.agent);form.elements.marketingId.value=l.marketingId||'';form.elements.reactivated.value='';$('pfReactivation').hidden=l.status==='Active';$('pfFormTitle').textContent='Edit listing';pfChooseTab('listings');form.scrollIntoView({behavior:'smooth',block:'start'});}
+function pfEditListing(l){pfEditing=l.id;const form=$('pfListingForm');for(const key of ['name','reference','location','link','published','status'])form.elements[key].value=l[key]||'';pfSelectOptions(form.elements.agent,l.agent);form.elements.marketingId.value=l.marketingId||'';form.elements.reactivated.value='';$('pfListingImages').value='';$('pfReactivation').hidden=l.status==='Active';$('pfFormTitle').textContent='Edit listing';pfChooseTab('listings');form.scrollIntoView({behavior:'smooth',block:'start'});}
 function pfFormErrors(errors){document.querySelectorAll('[data-pf-error]').forEach(e=>e.textContent=errors[e.dataset.pfError]||'')}
 function pfReadForm(form){const d=Object.fromEntries(new FormData(form));for(const key of ['name','reference','location','link'])d[key]=String(d[key]||'').trim();d.agentName=pfAgentName(d.agent);return d}
+
+function pfMarketingProperty(listing){
+ let property=state.properties.find(p=>p.id===listing.marketingId)||state.properties.find(p=>p.pfListingId===listing.id);
+ if(!property){property={id:crypto.randomUUID(),code:listing.reference,name:listing.name,community:listing.location||'',agent:listing.agent||'',hero:'',created:new Date().toISOString()};state.properties.push(property)}
+ Object.assign(property,{pfListingId:listing.id,reference:listing.reference,name:listing.name,community:listing.location||property.community||'',agent:listing.agent||property.agent||''});
+ listing.marketingId=property.id;return property;
+}
+async function pfUploadListingImages(listing,files){
+ if(!files.length)return;
+ const property=pfMarketingProperty(listing),existing=(await request(db.transaction('photos').objectStore('photos').getAll())).filter(p=>p.property===property.id);
+ const failures=[];let added=0;
+ for(const file of files){
+  const hash=Array.from(new Uint8Array(await crypto.subtle.digest('SHA-256',await file.arrayBuffer()))).map(b=>b.toString(16).padStart(2,'0')).join('');
+  if(existing.some(p=>p.hash===hash))continue;
+  const photo={id:crypto.randomUUID(),property:property.id,name:file.name,blob:file,hash,order:existing.length,settings:{preset:'original',intensity:0,fit:'contain',x:.5,y:.5}};
+  try{const image=await imageFor(photo);photo.width=image.naturalWidth;photo.height=image.naturalHeight;await savePhoto(photo);existing.push(photo);added++;if(!property.hero)property.hero=photo.id}
+  catch(error){failures.push(file.name)}
+  $('pfFormStatus').textContent='Imported '+added+' / '+files.length+' images…';
+ }
+ await persist();if(failures.length)throw Error('Listing saved, but these images could not be imported: '+failures.join(', ')+'. Try saving again to retry; duplicates are skipped.');
+ return added;
+}
+
 function pfSavedListing(data,old){const now=new Date().toISOString();if(old&&old.status!=='Active'&&data.status==='Active'){if(!PFCore.validDate(data.reactivated))throw Error('Enter the new publication/reactivation date before restarting renewals.');data.published=data.reactivated;data.cycleStart=data.reactivated}else data.cycleStart=old?.history?.length?old.cycleStart:data.published||'';delete data.reactivated;return {...old,...data,id:old?.id||crypto.randomUUID(),created:old?.created||now,updated:now,history:old?.history||[],reviews:old?.reviews||[],revisions:old?.revisions||[]}}
 function renderPF(){
  if(!$('pfListingList'))return;const pf=pfData(),query=$('pfSearch').value.toLowerCase(),status=$('pfStatusFilter').value,agent=$('pfAgentFilter').value,location=$('pfLocationFilter').value.toLowerCase(),date=$('pfDateFilter').value;
@@ -128,7 +151,10 @@ function initPF(){
  document.querySelectorAll('[data-pf-tab]').forEach(b=>b.onclick=()=>pfChooseTab(b.dataset.pfTab));
  for(const id of ['pfSearch','pfStatusFilter','pfAgentFilter','pfLocationFilter','pfDateFilter'])$(id).oninput=renderPF;
  $('pfNewListing').onclick=()=>{pfEditing='';$('pfListingForm').reset();pfFormErrors({});$('pfFormTitle').textContent='Add a listing';$('pfReactivation').hidden=true;renderPF()};
- $('pfListingForm').onsubmit=async e=>{e.preventDefault();const data=pfReadForm(e.target),old=pfData().listings.find(l=>l.id===pfEditing),errors=PFCore.listingErrors(data,pfData().listings,pfEditing);if(old&&old.status!=='Active'&&data.status==='Active'&&!PFCore.validDate(data.reactivated))errors.reactivated='Enter a new publication/reactivation date.';pfFormErrors(errors);if(Object.keys(errors).length){const duplicate=pfData().listings.find(l=>l.id!==pfEditing&&l.reference.toLowerCase()===data.reference.toLowerCase());$('pfDuplicate').replaceChildren();if(duplicate)$('pfDuplicate').append(button('Edit existing listing',()=>pfEditListing(duplicate)));return}const save=$('pfSaveListing');save.disabled=true;try{await pfCommit(()=>{const record=pfSavedListing(data,old);if(old)Object.assign(old,record);else pfData().listings.push(record)});$('pfNewListing').click();toast('Listing saved.')}catch(error){$('pfFormStatus').textContent=error.message}finally{save.disabled=false}};
+ $('pfListingForm').onsubmit=async e=>{e.preventDefault();const data=pfReadForm(e.target),old=pfData().listings.find(l=>l.id===pfEditing),errors=PFCore.listingErrors(data,pfData().listings,pfEditing);if(old&&old.status!=='Active'&&data.status==='Active'&&!PFCore.validDate(data.reactivated))errors.reactivated='Enter a new publication/reactivation date.';pfFormErrors(errors);if(Object.keys(errors).length){const duplicate=pfData().listings.find(l=>l.id!==pfEditing&&l.reference.toLowerCase()===data.reference.toLowerCase());$('pfDuplicate').replaceChildren();if(duplicate)$('pfDuplicate').append(button('Edit existing listing',()=>pfEditListing(duplicate)));return}const files=[...$('pfListingImages').files];if(files.length>50||files.some(f=>!['image/jpeg','image/png','image/webp'].includes(f.type)||f.size>25*1024*1024)){$('pfFormStatus').textContent='Choose up to 50 JPG, PNG or WebP images under 25 MB each.';return}
+ const save=$('pfSaveListing');save.disabled=true;let saved;
+ try{await pfCommit(()=>{const record=pfSavedListing(data,old);if(old){Object.assign(old,record);saved=old}else{pfData().listings.push(record);saved=record}pfMarketingProperty(saved)});pfEditing=saved.id;await pfUploadListingImages(saved,files);$('pfNewListing').click();$('pfFormStatus').textContent='Listing saved'+(files.length?' with its images':'')+'. Find it in Marketing Tools using reference '+saved.reference+'.';toast('Listing saved and available in Marketing Tools.')}
+ catch(error){$('pfFormStatus').textContent=error.message}finally{save.disabled=false}};
  $('pfAddBulkRow').onclick=pfAddBulkRow;$('pfSaveBulk').onclick=pfSaveBulk;pfAddBulkRow();
  $('pfReviewListing').onchange=pfLoadReviewListing;$('pfRunReview').onclick=pfRunReview;$('pfGenerate').onclick=pfGenerate;$('pfFetchLink').onclick=()=>pfReadPublicLink(true);
  const properties=$('pfReviewProperty');properties.replaceChildren(new Option('Select a Marketing property',''));for(const p of state.properties)properties.add(new Option(p.name,p.id));properties.onchange=()=>{pfReviewPhotos=[];pfPhotoPicker()};

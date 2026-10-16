@@ -30,7 +30,7 @@ async function mtOpen(toolId,saved=null){
  const tool=MT_TOOLS.find(t=>t.id===toolId);mtDraft=saved?structuredClone(saved):{tool:toolId,design:'classic',format:'post',propertyId:'',photoId:'',headshotId:'',qrId:'',photoZoom:100,headshotZoom:100,photoX:.5,photoY:.5,headX:.5,headY:.5,agentName:state.profileName||'Mikee',agentTitle:'',agentPhone:'',achievement:'Sales Achievement',rating:'5'};
  $('mtForm').reset();for(const [key,value]of Object.entries(mtDraft)){const input=$('mtForm').elements[key];if(input&&input.type!=='checkbox')input.value=value}
  $('mtForm').elements.confirmed.checked=false;mtDraft.confirmed=false;
- const properties=$('mtProperty');properties.replaceChildren(new Option('Choose a saved property or enter details',''));for(const p of state.properties)properties.add(new Option((p.code?p.code+' — ':'')+p.name,p.id));properties.value=mtDraft.propertyId||'';
+ $('mtProperty').value=mtDraft.propertyId||'';const matched=state.properties.find(p=>p.id===mtDraft.propertyId);$('mtPropertySearch').value=matched?(matched.reference||matched.code||matched.name):'';$('mtPropertyMatch').textContent=matched?'Selected: '+matched.name:'';$('mtPropertyResults').replaceChildren();
  const agents=$('mtAgent');agents.replaceChildren(new Option('Choose an agent or enter details',''));for(const a of state.agents.filter(a=>!a.archived))agents.add(new Option(a.name,a.id));agents.value=mtDraft.agentId||'';
  const propertyTool=['listed','sold','rented'].includes(toolId);$('mtPropertyFields').hidden=!propertyTool;$('mtPermitFields').hidden=!propertyTool;$('mtReviewFields').hidden=toolId!=='review';$('mtAchievementFields').hidden=toolId!=='achievement';
  $('mtTitle').textContent=tool.name;$('mtSubtitle').textContent=tool.detail;mtShow('editor');await mtLoadPhotos();await mtRender();
@@ -119,12 +119,42 @@ async function mtRender(){if(!mtDraft)return;mtReadForm();const version=++mtRend
 function mtRenderHistory(){
  const list=$('mtHistory');list.replaceChildren();for(const post of [...mtData().posts].reverse()){const row=el('div','mt-history-row'),body=el('div');body.append(el('strong','',(MT_TOOLS.find(t=>t.id===post.tool)?.name||'Post')+' · '+(post.propertyName||post.agentName||post.reviewer||'')),el('p','',post.createdAt.slice(0,10)+' · '+post.design+' · '+post.format));row.append(body,button('Open & edit',()=>mtOpen(post.tool,post).catch(e=>toast(e.message))),button('Download again',async()=>{try{download(await blobOf(await mtDraw(post),'image/png'),C.safe(post.tool)+'_'+post.id+'.png')}catch(e){toast(e.message)}}));list.append(row)}hubEmpty(list,'Your generated posts will appear here.');}
 function mtCanvasPoint(e){const bounds=$('mtCanvas').getBoundingClientRect();return{x:(e.clientX-bounds.left)*$('mtCanvas').width/bounds.width,y:(e.clientY-bounds.top)*$('mtCanvas').height/bounds.height}}
+
+function mtPropertyCandidates(query){
+ const q=query.trim().toLowerCase();if(!q)return [];
+ const listings=pfData().listings.map(l=>({listing:l,property:state.properties.find(p=>p.id===l.marketingId||p.pfListingId===l.id),reference:l.reference||'',name:l.name||''}));
+ const linked=new Set(listings.map(x=>x.property?.id).filter(Boolean));
+ const properties=state.properties.filter(p=>!linked.has(p.id)).map(p=>({property:p,reference:p.reference||p.code||'',name:p.name||''}));
+ return [...listings,...properties].filter(x=>(x.reference+' '+x.name).toLowerCase().includes(q)).sort((a,b)=>Number(b.reference.toLowerCase()===q)-Number(a.reference.toLowerCase()===q));
+}
+function mtSearchProperties(){
+ const list=$('mtPropertyResults'),query=$('mtPropertySearch').value.trim();list.replaceChildren();
+ if(!query)return;
+ const matches=mtPropertyCandidates(query);
+ for(const candidate of matches.slice(0,12)){const choice=button(candidate.reference+' — '+candidate.name,()=>mtChooseProperty(candidate).catch(error=>toast(error.message)));choice.type='button';choice.style.display='block';choice.style.width='100%';choice.style.textAlign='left';choice.style.marginBottom='6px';list.append(choice)}
+ if(!matches.length)list.append(el('p','muted','No property found for this reference.'));
+}
+async function mtChooseProperty(candidate){
+ let property=candidate.property;
+ if(candidate.listing){await pfCommit(()=>{property=pfMarketingProperty(candidate.listing)})}
+ if(!property)return;
+ mtDraft.propertyId=property.id;$('mtProperty').value=property.id;
+ $('mtPropertySearch').value=candidate.reference||property.code||property.name;
+ $('mtPropertyMatch').textContent='Selected: '+property.name;$('mtPropertyResults').replaceChildren();
+ mtDraft.photoId=property.socialPhoto||property.hero||'';mtDraft.photoX=.5;mtDraft.photoY=.5;
+ for(const [key,value]of Object.entries({propertyName:property.name,location:property.community,beds:property.beds,baths:property.baths||'',area:property.area,price:property.price})){$('mtForm').elements[key].value=value||'';mtDraft[key]=value||''}
+ if(property.agent){$('mtAgent').value=property.agent;await mtPickAgent(property.agent)}else{mtDraft.agentId='';mtDraft.headshotId='';$('mtAgent').value='';for(const [key,value]of Object.entries({agentName:state.profileName||'Mikee',agentTitle:'',agentPhone:''})){$('mtForm').elements[key].value=value;mtDraft[key]=value}}
+ await mtLoadPhotos();if(!mtDraft.photoId&&mtPhotos[0])mtDraft.photoId=mtPhotos[0].id;await mtRender();
+}
+
 function mtInit(){
  $('mtToolsTab').onclick=$('mtBack').onclick=()=>{mtDraft=null;$('mtTitle').textContent='Marketing tools';$('mtSubtitle').textContent='Create branded property posts, reviews and agent milestones.';mtShow('tools')};
  $('mtHistoryTab').onclick=()=>{mtRenderHistory();mtShow('history')};
  $('mtPhotoStudio').onclick=()=>page('studio');$('mtCarousel').onclick=()=>openPropertyCarousel().catch(e=>toast(e.message));
  $('mtForm').oninput=()=>mtRender();
- $('mtProperty').onchange=async e=>{const p=state.properties.find(p=>p.id===e.target.value);mtDraft.propertyId=p?.id||'';mtDraft.photoId=p?.socialPhoto||p?.hero||'';if(p){for(const [key,value]of Object.entries({propertyName:p.name,location:p.community,beds:p.beds,baths:p.baths||'',area:p.area,price:p.price})){$('mtForm').elements[key].value=value||'';mtDraft[key]=value||''}if(p.agent){$('mtAgent').value=p.agent;await mtPickAgent(p.agent)}}await mtLoadPhotos();if(!mtDraft.photoId&&mtPhotos[0])mtDraft.photoId=mtPhotos[0].id;await mtRender()};
+ $('mtPropertySearch').oninput=mtSearchProperties;
+ $('mtPropertySearch').onkeydown=e=>{if(e.key==='Enter'){e.preventDefault();const q=e.target.value.trim().toLowerCase(),matches=mtPropertyCandidates(q),exact=matches.filter(x=>x.reference.toLowerCase()===q);if(exact.length===1)mtChooseProperty(exact[0]).catch(error=>toast(error.message));else if(matches.length===1)mtChooseProperty(matches[0]).catch(error=>toast(error.message));else mtSearchProperties()}};
+
  $('mtAgent').onchange=e=>mtPickAgent(e.target.value).catch(error=>toast(error.message));
  for(const [id,key,purpose]of [['mtPhotoUpload','photoId','property-photo'],['mtHeadshotUpload','headshotId','headshot'],['mtQRUpload','qrId','permit-qr']])$(id).onchange=async e=>{const file=e.target.files[0];if(!file)return;try{mtDraft[key]=await mtAsset(file,purpose);await mtRender()}catch(error){toast(error.message)}finally{e.target.value=''}};
  $('mtResetPosition').onclick=()=>{Object.assign(mtDraft,{photoX:.5,photoY:.5,headX:.5,headY:.5,photoZoom:100,headshotZoom:100});$('mtForm').elements.photoZoom.value=100;$('mtForm').elements.headshotZoom.value=100;mtRender()};
