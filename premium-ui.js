@@ -56,3 +56,22 @@ document.addEventListener('DOMContentLoaded',()=>{
  });
  mobile.addEventListener('change',()=>setSidebar(false));setSidebar(false);
 });
+
+/* Dismiss regular modal dialogs with a deliberate click on the backdrop. */
+function hubOutsideDialog(event,dialog){
+ if(!dialog||event.target!==dialog||!dialog.open||dialog.classList.contains('confirm-modal'))return false;
+ const bounds=dialog.getBoundingClientRect();
+ return event.clientX<bounds.left||event.clientX>bounds.right||event.clientY<bounds.top||event.clientY>bounds.bottom;
+}
+let hubBackdropPress=null;
+document.addEventListener('pointerdown',event=>{
+ const dialog=event.target?.tagName==='DIALOG'?event.target:null;
+ hubBackdropPress=hubOutsideDialog(event,dialog)?dialog:null;
+});
+document.addEventListener('pointercancel',()=>{hubBackdropPress=null});
+document.addEventListener('click',event=>{
+ const dialog=hubBackdropPress;hubBackdropPress=null;
+ if(!hubOutsideDialog(event,dialog))return;
+ if(typeof dialog.requestClose==='function')dialog.requestClose();
+ else if(dialog.dispatchEvent(new Event('cancel',{cancelable:true})))dialog.close();
+});
