@@ -13,3 +13,36 @@
 .pf-list-empty{padding:32px;color:var(--muted);margin:0}
 #pfListingDialog{width:min(720px,calc(100vw - 32px));padding:26px}#pfListingDialog>.panel{padding:16px 0 0;background:transparent;box-shadow:none}.pf-list-dialog-head{display:flex;justify-content:space-between;align-items:center;gap:16px}#pfListingDialog h2{font-size:25px;margin:6px 0 22px}#pfListingDialog form{display:grid;grid-template-columns:1fr 1fr;column-gap:20px}#pfListingDialog form>label:has(input[type=file]),#pfListingDialog .smallnote,#pfFormStatus,#pfDuplicate{grid-column:1/-1}#pfListingDialog input,#pfListingDialog select{width:100%}
 @media(max-width:700px){.pf-list-toolbar{align-items:flex-start}.pf-list-toolbar h2{font-size:24px}.pf-list-toolbar p{font-size:14px}.pf-list-search{flex-wrap:wrap;gap:12px}.pf-list-search input{flex-basis:100%}.pf-list-search>span{margin-left:auto}.pf-list-table td,.pf-list-table th{padding:18px 16px}#pfListingDialog form{grid-template-columns:1fr}}
+
+/* Keep all listing columns visible without horizontal scrolling. */
+.pf-list-table-wrap{overflow:visible}
+.pf-list-table{min-width:0;width:100%;table-layout:fixed}
+.pf-list-table th,.pf-list-table td{padding:20px clamp(8px,1vw,16px);white-space:normal;overflow-wrap:anywhere}
+.pf-list-table th{font-size:10px;line-height:1.6;letter-spacing:.04em}
+.pf-list-table td{font-size:14px;line-height:1.6}
+.pf-list-table th:nth-child(1){width:26%}
+.pf-list-table th:nth-child(2){width:15%}
+.pf-list-table th:nth-child(3){width:13%}
+.pf-list-table th:nth-child(4){width:14%}
+.pf-list-table th:nth-child(5){width:15%}
+.pf-list-table th:nth-child(6){width:10%}
+.pf-list-table th:nth-child(7){width:7%}
+.pf-list-table .pf-list-name{font-size:16px;max-width:none;line-height:1.5}
+.pf-list-table .pf-list-reference{max-width:none;font-size:12px}
+.pf-list-table .pf-list-edit{padding:6px 0;min-width:0}
+.pf-list-table .pf-list-status{padding:4px 7px;font-size:11px}
+@media(max-width:1000px){
+ .pf-list-table thead{display:none}
+ .pf-list-table,.pf-list-table tbody{display:block;width:100%}
+ .pf-list-table tbody tr{display:grid;grid-template-columns:1fr 1fr;gap:14px 22px;padding:22px;border-bottom:1px solid var(--line)}
+ .pf-list-table tbody tr:last-child{border-bottom:0}
+ .pf-list-table td{display:block;border:0;padding:0;min-width:0;overflow-wrap:anywhere}
+ .pf-list-table td:first-child{grid-column:1/-1}
+ .pf-list-table td:not(:first-child):before{display:block;color:var(--muted);font-size:10px;letter-spacing:.05em;text-transform:uppercase;margin-bottom:4px}
+ .pf-list-table td:nth-child(2):before{content:'Agent'}
+ .pf-list-table td:nth-child(3):before{content:'Published'}
+ .pf-list-table td:nth-child(4):before{content:'Scheduled task'}
+ .pf-list-table td:nth-child(5):before{content:'Day 28 deadline'}
+ .pf-list-table td:nth-child(6):before{content:'Status'}
+ .pf-list-table td:nth-child(7){align-self:end;justify-self:end}
+}
