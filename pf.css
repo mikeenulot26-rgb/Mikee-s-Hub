@@ -72,3 +72,13 @@
 [data-theme="dark"] #pfListingDialog input,[data-theme="dark"] #pfListingDialog select{background:#252b32;color:#e5ebf1;border-color:#45505d}
 [data-theme="dark"] #pfListingDialog .pf-date-notice{background:#302e26;color:#d3c9ac;border-color:#494334}
 @media(max-width:650px){#pfListingDialog{width:calc(100vw - 24px);max-height:calc(100dvh - 24px);padding:22px}#pfListingDialog #pfListingForm{grid-template-columns:1fr;gap:18px}#pfListingDialog .pf-list-dialog-head{margin-bottom:24px}}
+
+/* Keep the listing modal compact at desktop zoom levels. */
+#pfListingDialog{width:min(900px,calc(100vw - 48px));padding:26px}
+#pfListingDialog .pf-list-dialog-head{margin-bottom:22px}
+#pfListingDialog #pfListingForm{gap:18px 26px}
+#pfListingDialog input,#pfListingDialog select{height:44px;margin-top:7px;padding:9px 12px}
+#pfListingDialog .pf-date-notice{padding:16px 20px}
+#pfListingDialog .pf-list-extras{margin:0;padding:0;border:0}
+#pfListingDialog .pf-list-dialog-actions{margin-top:4px}
+@media(max-width:650px){#pfListingDialog{width:calc(100vw - 24px);padding:20px}}
