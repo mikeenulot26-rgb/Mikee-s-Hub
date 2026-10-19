@@ -47,3 +47,28 @@
  .pf-list-table td:nth-child(6):before{content:'Status'}
  .pf-list-table td:nth-child(7){align-self:end;justify-self:end}
 }
+
+/* Solomon-style compact listing editor. */
+#pfListingDialog{width:min(1120px,calc(100vw - 48px));max-height:calc(100dvh - 64px);box-sizing:border-box;padding:32px;border:1px solid #e0e5ea;border-radius:14px;background:#fff;color:#182d47;overflow:auto}
+#pfListingDialog::backdrop{background:rgba(17,35,54,.5);backdrop-filter:blur(4px)}
+#pfListingDialog .pf-list-dialog-head{margin-bottom:30px}
+#pfListingDialog #pfFormTitle{margin:0;font-size:25px;font-weight:700;line-height:1.3;color:inherit}
+#pfCloseListing{display:grid;place-items:center;width:36px;height:36px;min-height:36px;padding:0;background:transparent;border:0;color:#81909e;font-size:30px;line-height:1;box-shadow:none}
+#pfListingDialog #pfListingForm{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:22px 28px}
+#pfListingDialog label{margin:0;font-size:14px;line-height:1.5;font-weight:500;color:inherit}
+#pfListingDialog input,#pfListingDialog select{box-sizing:border-box;min-width:0;width:100%;height:49px;margin:9px 0 0;padding:11px 14px;border:1px solid #dbe1e6;border-radius:6px;background:#fff;color:#182d47;font:inherit;font-size:15px;box-shadow:none}
+#pfListingDialog input:focus-visible,#pfListingDialog select:focus-visible{outline:2px solid #8199b3;outline-offset:2px}
+#pfListingDialog [hidden]{display:none!important}
+#pfListingDialog .pf-date-notice{grid-column:1/-1;margin:2px 0 0;padding:20px;background:#f7f5ef;border:1px solid #eee9dc;border-radius:7px;color:#887e63;font-size:14px;line-height:1.5}
+#pfListingDialog .pf-list-extras{grid-column:1/-1;font-size:13px;color:#697586}
+#pfListingDialog .pf-list-extras summary{cursor:pointer}
+#pfListingDialog .pf-list-extras label{display:block;margin-top:14px}
+#pfListingDialog #pfDuplicate:empty,#pfListingDialog #pfFormStatus:empty{display:none}
+#pfListingDialog .pf-list-dialog-actions{grid-column:1/-1;display:flex;justify-content:flex-end;gap:15px;margin-top:6px}
+#pfListingDialog .pf-list-dialog-actions button{min-height:48px;padding:12px 20px;border-radius:7px;font-size:14px;font-weight:600}
+#pfListingDialog #pfSaveListing{background:#0b203c;color:#fff;border:1px solid #0b203c}
+#pfListingDialog #pfCancelListing{background:#fff;color:#182d47;border:1px solid #dbe1e6}
+[data-theme="dark"] #pfListingDialog{background:#1b1f24;color:#e5ebf1;border-color:#39424c}
+[data-theme="dark"] #pfListingDialog input,[data-theme="dark"] #pfListingDialog select{background:#252b32;color:#e5ebf1;border-color:#45505d}
+[data-theme="dark"] #pfListingDialog .pf-date-notice{background:#302e26;color:#d3c9ac;border-color:#494334}
+@media(max-width:650px){#pfListingDialog{width:calc(100vw - 24px);max-height:calc(100dvh - 24px);padding:22px}#pfListingDialog #pfListingForm{grid-template-columns:1fr;gap:18px}#pfListingDialog .pf-list-dialog-head{margin-bottom:24px}}

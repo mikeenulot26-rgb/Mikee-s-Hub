@@ -165,7 +165,7 @@ async function pfReadPublicLink(runAfter=false){
 
 function initPF(){
  $('pfAddListing').onclick=()=>{$('pfNewListing').click();$('pfFormStatus').textContent='';$('pfListingDialog').showModal();$('pfListingForm').elements.name.focus()};
- $('pfCloseListing').onclick=()=>$('pfListingDialog').close();
+ $('pfCloseListing').onclick=$('pfCancelListing').onclick=()=>$('pfListingDialog').close();
  $('pfImportPage').onchange=async e=>{const file=e.target.files[0];if(!file)return;try{if(file.size>10000000)throw Error('Choose an HTML page under 10 MB.');const result=extractPFPage(await file.text());if(!result.ok)throw Error(result.message);pfPopulatePublicResult(result,$('pfReviewLink').value.trim());$('pfLinkStatus').textContent=pfRemotePhotos.length?pfRemotePhotos.length+' images found. Download individually or as a ZIP below.':'No listing images found in this HTML file.'}catch(error){$('pfLinkStatus').textContent=error.message}finally{e.target.value=''}};
  document.querySelectorAll('[data-pf-tab]').forEach(b=>b.onclick=()=>pfChooseTab(b.dataset.pfTab));
  for(const id of ['pfSearch','pfStatusFilter','pfAgentFilter','pfLocationFilter','pfDateFilter'])$(id).oninput=renderPF;
