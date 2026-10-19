@@ -44,7 +44,7 @@ function pfRenderListingTable(listings,total){
  const list=$('pfListingList');list.replaceChildren();$('pfListingCount').textContent=listings.length===total?total+' '+(total===1?'listing':'listings'):listings.length+' of '+total+' listings';
  if(!listings.length){list.append(el('p','pf-list-empty',total?'No listings match your search.':'No listings yet. Click Add listing to get started.'));return}
  const table=el('table','pf-list-table'),caption=el('caption','kart-sr','Property Finder listings and renewal dates'),head=el('thead'),titles=el('tr');
- for(const label of ['Property / reference','Agent','Published','Scheduled task','Day 28 deadline','Status','Actions']){const th=el('th','',label);th.scope='col';titles.append(th)}head.append(titles);table.append(caption,head);
+ for(const label of ['Property / reference','Agent','Published','Scheduled task','Day 28 deadline','Status','Actions']){const th=el('th','',label==='Actions'?'':label);th.scope='col';if(label==='Actions')th.setAttribute('aria-label','Actions');titles.append(th)}head.append(titles);table.append(caption,head);
  const body=el('tbody');for(const listing of listings){
   const dates=listing.status==='Active'?PFCore.renewalDates(listing.cycleStart||listing.published):null,row=el('tr'),property=el('td'),name=button(listing.name,()=>pfListingDetails(listing.id));name.className='pf-list-name';name.type='button';
   property.append(name,el('small','pf-list-reference',listing.reference));row.append(property,el('td','',pfAgentName(listing.agent)||listing.agentName||'—'),el('td','',pfTableDate(listing.published)),el('td','',pfTableDate(dates?.scheduled)),el('td',dates?.actual<dubaiDate()?'pf-overdue':'',pfTableDate(dates?.actual)));
