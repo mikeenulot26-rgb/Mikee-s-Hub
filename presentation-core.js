@@ -1,3 +1,4 @@
+(function(){
 'use strict';
 const crypto=globalThis.crypto||(typeof require==='function'?require('node:crypto'):null);
 const statuses=['confirmed','user','conflict','unavailable'];
@@ -33,3 +34,5 @@ function diff(previous,next){const changes=[];for(const key of ['title','layout'
 const PresentationCore={id,clean,numeric,norm,statuses,evidenceSupports,selectComparables,extractBasic,reconcileFacts,payment,yieldScenario,purchaseCosts,validateChart,validateDeck,outline,diff};
 
 if(typeof module!=='undefined'&&module.exports)module.exports=PresentationCore;else globalThis.PresentationCore=PresentationCore;
+
+})();
