@@ -22,3 +22,12 @@
 #psReviewSection>h2,#psReviewSection>h2+p{display:none}
 #psSlides .ps-slide{padding:16px;background:var(--paper)}
 @media(max-width:1000px){#presentationstudio .ps-grid{grid-template-columns:1fr}}
+#psAgentBlock{min-width:0;border-top:1px solid var(--line);padding-top:20px;margin-top:4px}
+#psAgentBlock>label{display:block;font-weight:600;color:var(--ink)}
+#psAgentBlock select{width:100%;font-size:16px;min-height:48px}
+#psAgentBlock .ps-disclosure{margin:12px 0}
+#psAgentSummary{overflow-wrap:anywhere}
+#psAgentFields{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+#psAgentFields>label:last-child{grid-column:1/-1}
+#psAgentBlock .ps-manual-agent:not([open])>#psAgentFields{display:none}
+@media(max-width:650px){#psAgentFields{grid-template-columns:1fr}}
