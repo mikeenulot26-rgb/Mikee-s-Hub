@@ -25,4 +25,18 @@ async function init(start){
  finally{restoring=false;loading(false)}
  document.getElementById('authGate').hidden=false;
 }
-document.getElementById('signOut').onclick=async()=>{try{await call('/auth/v1/logout',{method:'POST'})}catch{}localStorage.removeItem(sessionKey);location.reload()};return{changePassword:password=>json('/auth/v1/user',{method:'PUT',body:JSON.stringify({password})}),pfPhoto:body=>call('/functions/v1/pf-public-review',{method:'POST',body:JSON.stringify({...body,action:'photo'})}).then(r=>r.blob()),pfPublic:body=>json('/functions/v1/pf-public-review',{method:'POST',body:JSON.stringify(body)}),init,save,upload,uploadVariant,download,remove,status,reminders:(body)=>json('/functions/v1/hub-reminders',{method:'POST',body:JSON.stringify(body)})};})();
+document.getElementById('signOut').onclick=async()=>{try{await call('/auth/v1/logout',{method:'POST'})}catch{}localStorage.removeItem(sessionKey);location.reload()};const presentations={
+ userId:()=>session?.user?.id,
+ list:()=>json('/rest/v1/hub_presentations?select=id,title,revision,created_at,updated_at&order=updated_at.desc'),
+ get:id=>json('/rest/v1/hub_presentations?id=eq.'+encodeURIComponent(id)+'&select=*').then(r=>r[0]),
+ create:data=>json('/rest/v1/hub_presentations',{method:'POST',headers:{Prefer:'return=representation'},body:JSON.stringify({id:data.id,user_id:session.user.id,title:data.title,data})}).then(r=>r[0]),
+ save:(data,revision)=>json('/rest/v1/hub_presentations?id=eq.'+encodeURIComponent(data.id)+'&revision=eq.'+revision,{method:'PATCH',headers:{Prefer:'return=representation'},body:JSON.stringify({title:data.title,data,revision:revision+1,updated_at:new Date().toISOString()})}).then(r=>{if(!r?.length)throw Error('Presentation changed in another tab. Your local draft is retained; reload history before saving.');return r[0]}),
+ versions:id=>json('/rest/v1/hub_presentation_versions?presentation_id=eq.'+encodeURIComponent(id)+'&order=number.desc'),
+ remove:id=>json('/rest/v1/hub_presentations?id=eq.'+encodeURIComponent(id),{method:'DELETE'}),
+ upload:async(path,blob)=>{await call('/storage/v1/object/presentation-private/'+path,{method:'POST',headers:{'Content-Type':blob.type,'x-upsert':'false'},body:blob})},
+ download:path=>call('/storage/v1/object/authenticated/presentation-private/'+path).then(r=>r.blob()),
+ cleanup:paths=>json('/storage/v1/object/presentation-private',{method:'DELETE',body:JSON.stringify({prefixes:paths})}),
+ api:async body=>{if(!session)throw Error('Sign in to continue.');if(session.expires_at<Date.now()+60000)await call('/auth/v1/user');const r=await fetch('/api/presentation',{method:'POST',headers:{'Content-Type':'application/json',Authorization:'Bearer '+session.access_token},body:JSON.stringify(body)});const result=await r.json();if(!r.ok)throw Error(result.error||'Presentation service unavailable.');return result}
+};
+return{presentations,changePassword:password=>json('/auth/v1/user',{method:'PUT',body:JSON.stringify({password})}),pfPhoto:body=>call('/functions/v1/pf-public-review',{method:'POST',body:JSON.stringify({...body,action:'photo'})}).then(r=>r.blob()),pfPublic:body=>json('/functions/v1/pf-public-review',{method:'POST',body:JSON.stringify(body)}),init,save,upload,uploadVariant,download,remove,status,reminders:(body)=>json('/functions/v1/hub-reminders',{method:'POST',body:JSON.stringify(body)})};})();
+
