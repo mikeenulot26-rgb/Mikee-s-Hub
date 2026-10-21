@@ -11,10 +11,10 @@ class Capture{
 class VoiceAutoSend{
  constructor({onSend,onPending=()=>{},delay=3000,setTimer=setTimeout,clearTimer=clearTimeout}){Object.assign(this,{onSend,onPending,delay,setTimer,clearTimer});this.timer=null;this.text='';this.generation=0}
  clear(){if(this.timer!==null)this.clearTimer(this.timer);this.timer=null;this.generation++;this.onPending(false)}
- cancel(){this.clear();this.text=''}
+ cancel(){this.clear();this.text='';this.speaking=false}
  arm(){this.clear();if(!this.text)return;const generation=this.generation;this.onPending(true);this.timer=this.setTimer(()=>{if(generation!==this.generation)return;const text=this.text;this.timer=null;this.text='';this.generation++;this.onPending(false);if(text)this.onSend(text)},this.delay)}
- update(text,meta={}){const changed=this.text!==text;this.text=String(text||'').trim();if(changed||meta.interim||this.timer===null)this.arm()}
- activity(kind){if(kind==='start')this.clear();else if(kind==='end')this.arm()}
+ update(text,meta={}){const changed=this.text!==text;this.text=String(text||'').trim();if(meta.interim===false)this.speaking=false;if(!this.speaking&&(changed||meta.interim||this.timer===null))this.arm()}
+ activity(kind){if(kind==='start'){this.speaking=true;this.clear()}else if(kind==='end'){this.speaking=false;this.arm()}}
 }
 class BrowserCapture{
  constructor({env=root,language=()=> 'en-US',onState=()=>{},onText=()=>{},onError=()=>{},onActivity=()=>{}}){Object.assign(this,{env,language,onState,onText,onError,onActivity});this.status='idle';this.sequence=0;this.recognition=null;this.pending=null;this.timer=null;this.finishTimer=null}
