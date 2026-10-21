@@ -65,3 +65,10 @@ test('multi-project pages retain separate summaries and match each project image
   const assets=Object.fromEntries(d.images.map(i=>[i.path,'data:image/png;base64,'+png.toString('base64')]));assert.doesNotThrow(()=>R.layoutDeck(d,assets));
  }finally{dns.lookup=oldLookup;https.get=oldGet;global.fetch=oldFetch}
 });
+test('preview renders HTML even when private storage returns plain text; cover has no prepared date',async()=>{
+ const vm=require('node:vm'),source=fs.readFileSync(path.join(__dirname,'../presentation-studio.js'),'utf8');
+ const fn=source.match(/async function psShowPreview\(path\)\{[^\n]+/)[0];let previewBlob;const frame={hidden:true};
+ const context={Blob,PSCloud:{download:async()=>new Blob(['<!doctype html><h1>Property presentation</h1>'],{type:'text/plain'})},psPreviewURL:null,URL:{createObjectURL:b=>{previewBlob=b;return 'blob:preview'},revokeObjectURL(){}},$:()=>frame};
+ vm.createContext(context);await vm.runInContext(fn+';psShowPreview("preview.html")',context);assert.equal(previewBlob.type,'text/html;charset=utf-8');assert.ok((await previewBlob.text()).startsWith('<!doctype html>'));assert.equal(frame.src,'blob:preview');assert.equal(frame.hidden,false);
+ const d=deck(),pages=R.layoutDeck(d);assert.ok(!pages[0].some(n=>n.type==='text'&&/^Prepared \d/.test(n.text)));
+});
