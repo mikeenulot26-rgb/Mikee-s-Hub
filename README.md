@@ -2,6 +2,8 @@
 
 First incremental release: a marketing studio with Supabase private cloud integration. Owner allowlist provisioning and browser login testing are still pending. No paid AI, no external photo uploads, and no invented property records.
 
+See [ASSISTANT.md](ASSISTANT.md) for the personal assistant, supported actions, server configuration, privacy, and device-testing status.
+
 ## Included
 
 - Property records and agent library, synced to a private Supabase workspace with a per-account IndexedDB cache.

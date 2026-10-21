@@ -11,3 +11,4 @@ function ensureRecurringTasks(h,today){
  }
  return added;
 }
+if(typeof module!=='undefined'&&module.exports)module.exports={ensureRecurringTasks,recurrenceMatches,recurrenceShift,recurrenceLabels};

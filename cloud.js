@@ -38,5 +38,12 @@ document.getElementById('signOut').onclick=async()=>{try{await call('/auth/v1/lo
  cleanup:paths=>json('/storage/v1/object/presentation-private',{method:'DELETE',body:JSON.stringify({prefixes:paths})}),
  api:async body=>{if(!session)throw Error('Sign in to continue.');if(session.expires_at<Date.now()+60000)await call('/auth/v1/user');const r=await fetch('/api/presentation',{method:'POST',headers:{'Content-Type':'application/json',Authorization:'Bearer '+session.access_token},body:JSON.stringify(body)});const result=await r.json();if(!r.ok)throw Error(result.error||'Presentation service unavailable.');return result}
 };
-return{presentations,changePassword:password=>json('/auth/v1/user',{method:'PUT',body:JSON.stringify({password})}),pfPhoto:body=>call('/functions/v1/pf-public-review',{method:'POST',body:JSON.stringify({...body,action:'photo'})}).then(r=>r.blob()),pfPublic:body=>json('/functions/v1/pf-public-review',{method:'POST',body:JSON.stringify(body)}),init,save,upload,uploadVariant,download,remove,status,reminders:(body)=>json('/functions/v1/hub-reminders',{method:'POST',body:JSON.stringify(body)})};})();
+const assistant={
+ userId:()=>session?.user?.id||'',
+ revision:()=>revision,
+ adoptRevision:value=>{revision=value;status('Private cloud · Saved')},
+ snapshot:async()=>{const rows=await json('/rest/v1/marketing_workspaces?user_id=eq.'+session.user.id+'&select=data,revision');if(!rows?.length)throw Error('Saved workspace was not found.');return rows[0]},
+ request:async(body,{signal}={})=>{if(!session)throw Error('Sign in to continue.');if(session.expires_at<Date.now()+60000)await call('/auth/v1/user');const r=await fetch('/api/assistant',{method:'POST',headers:{'Content-Type':'application/json',Authorization:'Bearer '+session.access_token},body:JSON.stringify(body),signal});let data;try{data=await r.json()}catch{throw Error('Assistant connection failed. Your input is retained.')}if(!r.ok)throw Object.assign(Error(data.error||'Assistant request failed. Your input is retained.'),{status:r.status});return data}
+};
+return{assistant,presentations,changePassword:password=>json('/auth/v1/user',{method:'PUT',body:JSON.stringify({password})}),pfPhoto:body=>call('/functions/v1/pf-public-review',{method:'POST',body:JSON.stringify({...body,action:'photo'})}).then(r=>r.blob()),pfPublic:body=>json('/functions/v1/pf-public-review',{method:'POST',body:JSON.stringify(body)}),init,save,upload,uploadVariant,download,remove,status,reminders:(body)=>json('/functions/v1/hub-reminders',{method:'POST',body:JSON.stringify(body)})};})();
 

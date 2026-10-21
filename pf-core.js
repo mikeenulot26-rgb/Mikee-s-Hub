@@ -89,3 +89,4 @@ function description(input){
 
 root.PFCore={shift,validDate,renewalDates,reconcile,listingErrors,audit,titles,description};
 })(typeof window==='undefined'?globalThis:window);
+if(typeof module!=='undefined'&&module.exports)module.exports=globalThis.PFCore;
