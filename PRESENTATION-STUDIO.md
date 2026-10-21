@@ -46,3 +46,11 @@ Covers provenance/conflicts, payment/yield/cost arithmetic, source requirements,
 PDF pages were rendered with Poppler and inspected. Supabase rollback tests exercised owner insert/approval/version retrieval and non-owner denial. Security advisors reported no new Presentation Studio issues; unrelated existing project advisories were left unchanged.
 
 Live signed-in browser/iPhone flows and provider calls require end-to-end verification with the user's session and configured providers. They have not been claimed as tested. Existing modules were preserved; integration checks cover script syntax, unique DOM IDs and all Studio control bindings.
+
+## Focused entry page (21 October 2026)
+
+The default page now asks only for a website link, optional notes and the agent. The title is derived from source text, branding is copied automatically from the same `state.brand` used by Marketing Tools, and generation goes straight to a reviewable preview. Where no Brand Kit logo image exists, it reuses the existing Croswell text wordmark rather than inventing an image or blocking the download. A final review confirmation retains the distinction between independently unverified and confirmed facts.
+
+Source/fact and slide edits open in a separate modal. Detailed calculation and service controls remain retained for compatibility with saved decks, but are not part of the main entry flow. Public website cover images (JPEG/PNG og:image) may be retrieved through the same DNS-pinned, capped HTTPS transport and saved privately. They are labelled for review before use. A refresh replaces previously derived website images so a different property's prior cover is not silently reused.
+
+The page was visually reviewed in an isolated browser preview; manual disclosure expanded correctly. Existing signed-in production flows were not used for this preview. The redesigned shared renderer uses larger Inter typography, warm paper backgrounds, photograph-led covers, fact cards, clearer charts and matching HTML/PDF layouts. Twelve focused tests pass, including wordmark-only branding and long source details. Live AI/search and authorised transaction-data feed configuration remain unchanged.
