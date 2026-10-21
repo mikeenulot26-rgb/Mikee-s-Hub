@@ -1,1 +1,1 @@
-{"functions": {"api/presentation.js": {"maxDuration": 120, "includeFiles": "{lib/**,node_modules/pdfkit/js/**,presentation-core.js}"}}}
+{"functions": {"api/presentation.js": {"maxDuration": 120, "includeFiles": "{lib/**,node_modules/pdfkit/js/**,presentation-core.js}"}}, "headers": [{"source": "/", "headers": [{"key": "Cache-Control", "value": "no-cache, max-age=0, must-revalidate"}]}, {"source": "/index.html", "headers": [{"key": "Cache-Control", "value": "no-cache, max-age=0, must-revalidate"}]}]}

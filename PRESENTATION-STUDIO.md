@@ -57,6 +57,8 @@ The page was visually reviewed in an isolated browser preview; manual disclosure
 
 ## Presentation quality requirements
 
-New approved presentations require at least eight pages. The generator stops if there is insufficient sourced content; it does not add empty/filler slides. References are included only when numbers, charts or calculators are shown. General next-step boilerplate is omitted; the closing page is a branded contact design. Source history remains private in the editor regardless of whether a reference slide is required.
+New approved presentations require at least eight pages. The generator stops if there is insufficient sourced content; it does not add empty/filler slides. Source evidence stays in the private editor and inline citations; there is no standalone appendix slide. General next-step boilerplate is omitted; the closing page is a branded contact design. Source history remains private in the editor regardless of whether a reference slide is required.
 
 Research first reads the supplied page and identifies its project title, then follows relevant public project links (up to six additional pages). With BRAVE_SEARCH_API_KEY it also searches that actual project title. Without a search key it reports linked-source research only; no independent verification is claimed. Research page text and exact supporting quotes are retained for review. All follow-up pages and images use the same pinned public-address checks.
+
+Preview responses return HTML directly without a storage write/download cycle; repeated image data is embedded once and shared with CSS variables. Approved versions still store immutable HTML and PDF. All preview and approval requests enforce at least eight pages. Linked drafts from older generation versions are re-extracted before previewing. Studio assets carry a release query to refresh cached scripts. Security hours (24/7) cannot be extracted as a payment plan; explicit ratio plans must total 100 percent.
