@@ -1,3 +1,11 @@
+# Free voice update — 21 October 2026
+
+Browser-native `SpeechRecognition` / `webkitSpeechRecognition` is now the default microphone path. No app transcription API key or paid AI/speech call is needed. Choose English or Tagalog beside the microphone; mixed-language recognition depends on the browser. Transcripts stay editable and require Send. If recognition is unsupported, denied, interrupted, silent or fails, the panel points to iPhone keyboard dictation or typed input. Browser/OS recognition may process audio online under its own privacy settings; it is not advertised as always on-device. Actual iPhone Safari/Home Screen audio still requires a device test.
+
+Paid interpretation, transcription and cloud playback are disabled by default on the server, even if credentials exist. They require the separate operator flag `ASSISTANT_PAID_SERVICES_ENABLED=true`; this update does not set that flag or add credentials. Existing hosting/database usage is unchanged. Device speech synthesis remains available. The exact query “what are my pendings this week?” and related English/Tagalog wording now resolve to unfinished saved tasks for the Dubai calendar week.
+
+The older cloud-service configuration below is optional architecture documentation, not a required setup step for free voice.
+
 # Personal assistant — Mikee’s Hub
 
 ## Release state
