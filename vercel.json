@@ -1,1 +1,1 @@
-{"functions": {"api/presentation.js": {"maxDuration": 120, "includeFiles": "{lib/**,node_modules/pdfkit/js/data/**,presentation-core.js}"}}}
+{"functions": {"api/presentation.js": {"maxDuration": 120, "includeFiles": "{lib/**,node_modules/pdfkit/js/**,presentation-core.js}"}}}
