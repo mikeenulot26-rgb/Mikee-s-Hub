@@ -1,3 +1,7 @@
+# Voice auto-send update
+
+Voice transcripts now submit after approximately three seconds without new speech activity. Speech/result activity resets the timer. Closing, navigating, hiding the page, editing the transcript, Cancel voice, starting another recording, or a recognition error cancels pending submission. Typed input still requires Send. Empty transcripts never submit; duplicate final recognition callbacks share one timer. Timing depends on browser recognition events and has not been verified on a physical iPhone.
+
 # Free voice update — 21 October 2026
 
 Browser-native `SpeechRecognition` / `webkitSpeechRecognition` is now the default microphone path. No app transcription API key or paid AI/speech call is needed. Choose English or Tagalog beside the microphone; mixed-language recognition depends on the browser. Transcripts stay editable and require Send. If recognition is unsupported, denied, interrupted, silent or fails, the panel points to iPhone keyboard dictation or typed input. Browser/OS recognition may process audio online under its own privacy settings; it is not advertised as always on-device. Actual iPhone Safari/Home Screen audio still requires a device test.
