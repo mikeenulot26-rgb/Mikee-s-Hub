@@ -1,3 +1,7 @@
+# Browser timer binding regression fix
+
+The previous release assigned native browser timer functions to controller instance properties and then invoked them as methods. Native browser bindings rejected the receiver with Illegal invocation, including during input cleanup and Send. Default timer adapters now use wrapper functions, preserving native receiver rules. Dispatch cleanup is inside its try/finally so an unexpected preflight error cannot leave busy/microphone controls locked. The failure was reproduced in Chromium with the real assistant panel; browser Send/retry and controller cleanup are rechecked after this fix.
+
 # Automatic spoken replies to voice commands
 
 Microphone commands carry their voice origin through auto-send, clarification and retry. Replies automatically invoke device speech and retain the full text, independently of the typed-reply speech preference. Voice replies default on and can be muted separately in assistant Settings. A paused synthesis queue is resumed before speaking. Play/replay remains a recovery path for browser/OS restrictions; app code cannot override device volume, Silent mode, browser restrictions, or unavailable language voices. This change has automated coverage and is not a physical-iPhone verification.
