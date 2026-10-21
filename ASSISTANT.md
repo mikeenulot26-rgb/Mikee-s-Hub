@@ -1,3 +1,9 @@
+# Cross-device assistant synchronisation
+
+Assistant requests now fetch the current authenticated workspace before saving. The browser keeps the last saved baseline and performs a three-way reconciliation of existing records and photo metadata. Independent edits and additions on phone/desktop are preserved, unchanged remote deletions are respected, and conflicting changes to the same record stop without overwriting either version. Local image blobs are retained only for matching saved versions. Read-only requests no longer cause an unnecessary full-workspace write. A failed previous save queue does not prevent a fresh reconciliation. Post-action refresh updates the baseline and existing views.
+
+The screenshot phrase “create a schedule for me tomorrow at 2pm to speak with sheila g” is interpreted as an owner event titled “speak with sheila g”, at 14:00 the next Dubai day. No invitation is sent. Cross-device browser verification uses an explicit fixture backend and real IndexedDB, not the owner’s production records.
+
 # Browser timer binding regression fix
 
 The previous release assigned native browser timer functions to controller instance properties and then invoked them as methods. Native browser bindings rejected the receiver with Illegal invocation, including during input cleanup and Send. Default timer adapters now use wrapper functions, preserving native receiver rules. Dispatch cleanup is inside its try/finally so an unexpected preflight error cannot leave busy/microphone controls locked. The failure was reproduced in Chromium with the real assistant panel; browser Send/retry and controller cleanup are rechecked after this fix.
