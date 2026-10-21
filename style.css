@@ -109,3 +109,6 @@ html[data-theme=dark] .dropzone{background:#243047;border-color:#5a6d8b}
 .profile-editor{max-width:430px}
 @media(max-width:700px){.topnav .nav,.modulemenu>summary{font-size:15px}.navlinks{gap:16px}.topnav{padding-top:20px;padding-bottom:16px}.brandnav b{font-size:17px}}
 
+
+.note-record{align-items:flex-start;gap:20px}.note-content{flex:1;min-width:0}.note-content .notebody{white-space:pre-wrap;overflow-wrap:anywhere;margin-top:0}.note-actions{display:flex;gap:12px;flex-wrap:wrap;flex-shrink:0}.note-actions button{min-height:44px}.notes-tabs{margin:0 0 20px;flex-wrap:wrap}@media(max-width:600px){.note-record{flex-direction:column}.note-actions{align-self:flex-end}}
+.notes-tabs{display:flex;gap:10px}.notes-tabs button{min-height:44px;padding:10px 16px;border:1px solid var(--line);border-radius:12px;background:var(--surface,#fff);color:var(--ink);font:inherit}.notes-tabs button.active{background:var(--ink);color:var(--paper)}
