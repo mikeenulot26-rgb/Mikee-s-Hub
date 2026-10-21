@@ -31,3 +31,37 @@ test('pasted long URLs wrap without losing characters in HTML and PDF',async()=>
  d.facts[0].value='https://example.com/'+ 'x'.repeat(90);d.slides=[{kind:'facts',title:'Details',factIds:['f']}];
  assert.doesNotThrow(()=>R.layoutDeck(d));
 });
+
+test('public fetching supports Node all-address DNS callbacks and keeps redirect protection',async()=>{
+ const dns=require('node:dns').promises,https=require('node:https'),{EventEmitter}=require('node:events');
+ const oldLookup=dns.lookup,oldGet=https.get;let allChecked=false,singleChecked=false;
+ dns.lookup=async host=>[{address:host==='private.example'?'127.0.0.1':'8.8.8.8',family:4}];
+ https.get=(url,options,respond)=>{
+  options.lookup(url.hostname,{all:true},(error,records)=>{assert.ifError(error);assert.deepEqual(records,[{address:'8.8.8.8',family:4}]);allChecked=true});
+  options.lookup(url.hostname,{},(error,address,family)=>{assert.ifError(error);assert.equal(address,'8.8.8.8');assert.equal(family,4);singleChecked=true});
+  const req=new EventEmitter();req.destroy=()=>{};
+  queueMicrotask(()=>{const res=new EventEmitter();res.resume=()=>{};res.statusCode=url.pathname==='/redirect'?302:200;res.headers=res.statusCode===302?{location:'https://private.example/'}:{'content-type':'text/html'};respond(res);if(res.statusCode===200){res.emit('data',Buffer.from('<p>Bedrooms: 2</p>'));res.emit('end')}});return req;
+ };
+ try{const result=await F.fetchPublic('https://public.example/');assert.equal(result.bytes.toString(),'<p>Bedrooms: 2</p>');assert.ok(allChecked&&singleChecked);await assert.rejects(()=>F.fetchPublic('https://public.example/redirect'),/Private or reserved/)}finally{dns.lookup=oldLookup;https.get=oldGet}
+});
+test('empty imports cannot be approved and diagnostics stay out of presentation slides',()=>{
+ const d=deck();d.facts=[];d.charts=[];d.calculators={};d.sources=[{id:'failed',title:'https://example.com/?tracking=123',url:'https://example.com/',error:'Invalid IP address: undefined',content:''}];d.limitations=['https://example.com/: Invalid IP address: undefined'];d.slides=C.outline(d);
+ assert.throws(()=>C.requireContent(d),/No property information/);assert.throws(()=>C.validateDeck(d),/No property information/);assert.ok(!d.slides.some(s=>String(s.text).includes('Invalid IP')));
+ d.facts=[{id:'f',label:'Location',value:'Yas Island',status:'user',include:true}];d.slides=C.outline(d);assert.equal(C.requireContent(d),true);
+});
+
+test('multi-project pages retain separate summaries and match each project image',async()=>{
+ const dns=require('node:dns').promises,https=require('node:https'),{EventEmitter}=require('node:events');
+ const oldLookup=dns.lookup,oldGet=https.get,oldFetch=global.fetch,uid='qa-owner';
+ const page='<html><head><title>Example Developments</title></head><body>'+['Canal Homes','Beach Villas'].map((title,i)=>`<div class="project"><img src="/project-${i}.png"><div class="project-detail"><h3 class="project-title">${title}</h3><p>${(i?'Beachfront villas with private outdoor living. ':'Canal-side townhouses with spacious family living. ').repeat(5)}</p><div>Expected handover: ${2028+i}</div><div class="call-to-action-btns">Download Brochure</div></div></div>`).join('')+'</body></html>';
+ const png=Buffer.from('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+jvLkAAAAASUVORK5CYII=','base64');
+ dns.lookup=async()=>[{address:'8.8.8.8',family:4}];
+ https.get=(url,opts,respond)=>{opts.lookup(url.hostname,{all:true},(e,records)=>{assert.ifError(e);assert.equal(records[0].address,'8.8.8.8')});const req=new EventEmitter();req.destroy=()=>{};queueMicrotask(()=>{const res=new EventEmitter();res.statusCode=200;res.headers={'content-type':url.pathname.endsWith('.png')?'image/png':'text/html'};respond(res);res.emit('data',url.pathname.endsWith('.png')?png:Buffer.from(page));res.emit('end')});return req};
+ global.fetch=async()=>Response.json({ok:true});
+ try{const result=await require('../api/presentation.js')._test.extract({links:'https://public.example/',presentationId:crypto.randomUUID()},{user:{id:uid},auth:'Bearer qa'});
+  assert.equal(result.facts.length,2);assert.equal(result.images.length,2);assert.equal(result.facts[0].label,'Canal Homes');assert.ok(!result.facts[0].value.includes('2029'));assert.ok(!result.facts[1].value.includes('2028'));assert.ok(result.facts.every(f=>!f.value.includes('Download Brochure')));
+  const d=deck();d.sources=result.sources;d.facts=result.facts.map(f=>({...f,include:true}));d.images=result.images;d.charts=[];d.calculators={};d.slides=C.outline(d);
+  for(const fact of d.facts){const slide=d.slides.find(s=>s.factIds?.includes(fact.id));assert.ok(slide.imageId);assert.equal(d.images.find(i=>i.id===slide.imageId).sourceItemId,fact.sourceItemId);assert.ok(C.evidenceSupports(fact,d.sources[0]))}
+  const assets=Object.fromEntries(d.images.map(i=>[i.path,'data:image/png;base64,'+png.toString('base64')]));assert.doesNotThrow(()=>R.layoutDeck(d,assets));
+ }finally{dns.lookup=oldLookup;https.get=oldGet;global.fetch=oldFetch}
+});

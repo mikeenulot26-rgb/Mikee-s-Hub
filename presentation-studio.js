@@ -88,6 +88,7 @@ async function psPrepareSimple(){
   for(const fact of psDraft.facts){fact.include=!!fact.value?.trim()&&!['conflict','unavailable'].includes(fact.status);fact.approvedUnverified=false}
   psDraft.images=psDraft.images.filter(i=>!i.sourceURL);for(const image of result.images||[]){if(!psDraft.images.some(i=>i.sourceURL===image.sourceURL)){psDraft.images.push(image);psDraft.materials.push(image)}}
   psDraft.slides=PSC.outline(psDraft);psRenderFacts();psRenderSources();psRenderSlides();psRenderMaterials();await psSave();
+  try{PSC.requireContent(psDraft)}catch(e){$('psOutput').hidden=true;throw e}
   $('psConnection').textContent='Designing your preview…';psBusy=false;await psRender(false);
   $('psSourceNote').textContent=result.sources.some(s=>s.content&&s.kind==='website')?'Check the wording, website imagery and source notes before downloading. Retrieved details remain unverified until checked.':'Built from the details you supplied. The website could not be independently verified; check the presentation before downloading.';
   $('psConnection').hidden=true;$('psOutput').scrollIntoView({behavior:'smooth',block:'start'});
