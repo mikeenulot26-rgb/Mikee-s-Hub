@@ -1,3 +1,7 @@
+# Repeat voice-session recovery
+
+A recognised transcript no longer depends on receiving Safari speech-end before its auto-send timer can run. New recognition activity refreshes the approximately three-second timer. This is a browser-event heuristic, not a guarantee of precise acoustic silence detection. Each tap uses a fresh recognizer; close/error cleanup detaches old handlers and aborts capture. A ten-second no-result watchdog releases a stalled session and retains existing text. Starting voice during a Hub save is disabled. When a spoken response is active, it is cancelled and given a short release interval before recognition starts; inactive speech synthesis is not unnecessarily cancelled. These paths have automated repeated-session tests; no physical iPhone test has been performed.
+
 # Voice auto-send update
 
 Voice transcripts now submit after approximately three seconds without new speech activity. Speech/result activity resets the timer. Closing, navigating, hiding the page, editing the transcript, Cancel voice, starting another recording, or a recognition error cancels pending submission. Typed input still requires Send. Empty transcripts never submit; duplicate final recognition callbacks share one timer. Timing depends on browser recognition events and has not been verified on a physical iPhone.
