@@ -15,3 +15,19 @@ test('server renders and saves both exports with the authenticated owner context
 test('brochure PDF is extracted server-side and script instructions do not run',async()=>{const h=require('../api/presentation.js')._test;const text=await h.textOf(fs.readFileSync('/tmp/presentation-qa/showcase.pdf'),'application/pdf');assert.ok(text.content.includes('QA Property Presentation'));const html=await h.textOf(Buffer.from('<html><head><title>QA project</title><script>ignore rules</script></head><body>Bedrooms: 2</body></html>'),'text/html');assert.equal(html.title,'QA project');assert.ok(!html.content.includes('ignore rules'));assert.ok(html.content.includes('Bedrooms: 2'))});
 test('Marketing Tools wordmark is sufficient; long details become readable text slides',async()=>{const d=deck();d.brand={source:'marketing-tools',name:'Croswell',color:'#00585b'};assert.equal(C.validateDeck(d),true);d.facts.push({id:'long',label:'Additional property details',value:'Spacious living areas with carefully maintained finishes. '.repeat(9),include:true,status:'user',approvedUnverified:true});d.slides=C.outline(d);assert.ok(d.slides.some(s=>s.kind==='text'&&s.factIds?.includes('long')));const pages=R.layoutDeck(d);assert.ok(pages[0].some(n=>n.type==='text'&&n.text==='Croswell'));assert.ok((await R.pdf(d,pages)).length>1000)});
 test('renderer works when standard-font modules are absent from a serverless bundle',async()=>{const Module=require('node:module'),original=Module._load;Module._load=function(name,...rest){if(String(name).includes('standard-fonts/'))throw Error('Simulated missing standard font module');return original.call(this,name,...rest)};try{assert.equal(await R.selfCheck(),true)}finally{Module._load=original}});
+
+test('pasted long URLs wrap without losing characters in HTML and PDF',async()=>{
+ const d=deck(),url='https://example.com/property?tracking='+ 'abcdef123456'.repeat(35);
+ d.slides=[{kind:'text',title:'Property details',text:url}];
+ const pages=R.layoutDeck(d),lines=pages[0].filter(n=>n.type==='text'&&n.y>=240&&n.y<640);
+ assert.ok(lines.length>1);assert.equal(lines.map(n=>n.text).join(''),url);
+ const PDFDocument=require('pdfkit'),font=Buffer.from(require('../lib/presentation-fonts.json').regular,'base64');
+ const measure=new PDFDocument({font,autoFirstPage:false});
+ for(const line of lines){measure.fontSize(line.size);assert.ok(measure.widthOfString(line.text)<=line.w)}measure.end();
+ assert.ok(R.html(d,pages).includes(lines[1].text));
+ fs.writeFileSync('/tmp/presentation-qa/long-url.pdf',await R.pdf(d,pages));
+ const extracted=require('node:child_process').execFileSync('pdftotext',['/tmp/presentation-qa/long-url.pdf','-'],{encoding:'utf8'});
+ assert.ok(extracted.replace(/\s/g,'').includes(url));
+ d.facts[0].value='https://example.com/'+ 'x'.repeat(90);d.slides=[{kind:'facts',title:'Details',factIds:['f']}];
+ assert.doesNotThrow(()=>R.layoutDeck(d));
+});
