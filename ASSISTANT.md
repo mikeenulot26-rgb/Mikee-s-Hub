@@ -1,3 +1,7 @@
+# Automatic spoken replies to voice commands
+
+Microphone commands carry their voice origin through auto-send, clarification and retry. Replies automatically invoke device speech and retain the full text, independently of the typed-reply speech preference. Voice replies default on and can be muted separately in assistant Settings. A paused synthesis queue is resumed before speaking. Play/replay remains a recovery path for browser/OS restrictions; app code cannot override device volume, Silent mode, browser restrictions, or unavailable language voices. This change has automated coverage and is not a physical-iPhone verification.
+
 # Repeat voice-session recovery
 
 A recognised transcript no longer depends on receiving Safari speech-end before its auto-send timer can run. New recognition activity refreshes the approximately three-second timer. This is a browser-event heuristic, not a guarantee of precise acoustic silence detection. Each tap uses a fresh recognizer; close/error cleanup detaches old handlers and aborts capture. A ten-second no-result watchdog releases a stalled session and retains existing text. Starting voice during a Hub save is disabled. When a spoken response is active, it is cancelled and given a short release interval before recognition starts; inactive speech synthesis is not unnecessarily cancelled. These paths have automated repeated-session tests; no physical iPhone test has been performed.
