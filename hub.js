@@ -150,7 +150,7 @@ function notificationItems(h,now=new Date()){
  const events=h.events.filter(e=>!e.cancelled&&e.when?.startsWith(today)&&new Date(e.when+':00+04:00').getTime()>=now.getTime()-15*60000).map(e=>({
   kind:'event',id:e.id,title:e.title,item:e,label:'Event · '+e.when.slice(11,16),detail:'Today · Dubai time',sort:e.when
  }));
- return [...tasks,...events].sort((a,b)=>a.sort.localeCompare(b.sort));
+ return [...tasks,...events,...(typeof plNotifications==='function'?plNotifications():[])].sort((a,b)=>a.sort.localeCompare(b.sort));
 }
 function notificationKey(item){return JSON.stringify([item.kind,item.id,item.item.title,item.item.due||item.item.when,item.item.time||''])}
 function visibleNotifications(h){const dismissed=h.notificationDismissed;const keys=new Set(dismissed?.day===dubaiDate()?dismissed.keys:[]);return notificationItems(h).filter(item=>!keys.has(notificationKey(item)))}
@@ -183,7 +183,7 @@ function renderNotificationDropdown(){
  if(!count){count=el('span','notification-count');count.id='notificationCount';count.setAttribute('aria-hidden','true');bell.append(count)}
  count.hidden=!items.length;count.textContent=items.length>99?'99+':String(items.length);
  for(const item of items){
-  const row=button('',()=>{closeNotificationDropdown();if(item.kind==='task')editTask(item.item);else editEvent(item.item)});
+  const row=button('',()=>{closeNotificationDropdown();if(item.kind==='task')editTask(item.item);else if(item.kind==='event')editEvent(item.item);else if(typeof plOpenNotification==='function')plOpenNotification(item)});
   row.className='notification-item';row.append(el('span','notification-kind',item.label),el('strong','',item.title),el('small','',item.detail));list.append(row);
  }
  if(!items.length)list.append(el('p','notification-empty','You’re all caught up. No new notifications.'));

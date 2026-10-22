@@ -47,5 +47,16 @@ const assistant={
  snapshot:async()=>{const rows=await json('/rest/v1/marketing_workspaces?user_id=eq.'+session.user.id+'&select=data,revision');if(!rows?.length)throw Error('Saved workspace was not found.');return rows[0]},
  request:async(body,{signal}={})=>{if(!session)throw Error('Sign in to continue.');if(session.expires_at<Date.now()+60000)await call('/auth/v1/user');const r=await fetch('/api/assistant',{method:'POST',headers:{'Content-Type':'application/json',Authorization:'Bearer '+session.access_token},body:JSON.stringify(body),signal});let data;try{data=await r.json()}catch{throw Error('Assistant connection failed. Your input is retained.')}if(!r.ok)throw Object.assign(Error(data.error||'Assistant request failed. Your input is retained.'),{status:r.status});return data}
 };
-return{assistant,presentations,changePassword:password=>json('/auth/v1/user',{method:'PUT',body:JSON.stringify({password})}),pfPhoto:body=>call('/functions/v1/pf-public-review',{method:'POST',body:JSON.stringify({...body,action:'photo'})}).then(r=>r.blob()),pfPublic:body=>json('/functions/v1/pf-public-review',{method:'POST',body:JSON.stringify(body)}),init,save,upload,uploadVariant,download,remove,status,reminders:(body)=>json('/functions/v1/hub-reminders',{method:'POST',body:JSON.stringify(body)})};})();
+const launches={
+ list:()=>json('/rest/v1/hub_launches?select=*&order=updated_at.desc'),
+ sources:()=>json('/rest/v1/hub_launch_sources?select=*&order=id'),
+ digests:()=>json('/rest/v1/hub_launch_digests?select=*&order=day.desc&limit=90'),
+ preferences:()=>json('/rest/v1/hub_launch_preferences?select=push'),
+ setPush:push=>json('/rest/v1/hub_launch_preferences?on_conflict=user_id',{method:'POST',headers:{Prefer:'resolution=merge-duplicates,return=representation'},body:JSON.stringify({user_id:session.user.id,push})}),
+ personal:async(r,patch)=>{const rows=await json('/rest/v1/hub_launches?id=eq.'+r.id+'&personal_version=eq.'+r.personal_version,{method:'PATCH',headers:{Prefer:'return=representation'},body:JSON.stringify({...patch,personal_version:r.personal_version+1})});if(!rows.length)throw Error('This release was edited on another device. Reload before retrying.');return rows[0]},
+ image:async path=>{const r=await json('/storage/v1/object/sign/launch-images/'+path,{method:'POST',body:JSON.stringify({expiresIn:3600})});return config.url+'/storage/v1'+r.signedURL},
+ api:body=>json('/functions/v1/property-launches',{method:'POST',body:JSON.stringify(body)}),
+ pdf:async id=>{if(session.expires_at<Date.now()+60000)await call('/auth/v1/user');const r=await fetch('/api/launch-briefing',{method:'POST',headers:{'Content-Type':'application/json',Authorization:'Bearer '+session.access_token},body:JSON.stringify({id})});if(!r.ok)throw Error('Briefing could not be downloaded. Retry.');return r.blob()}
+};
+return{launches,assistant,presentations,changePassword:password=>json('/auth/v1/user',{method:'PUT',body:JSON.stringify({password})}),pfPhoto:body=>call('/functions/v1/pf-public-review',{method:'POST',body:JSON.stringify({...body,action:'photo'})}).then(r=>r.blob()),pfPublic:body=>json('/functions/v1/pf-public-review',{method:'POST',body:JSON.stringify(body)}),init,save,upload,uploadVariant,download,remove,status,reminders:(body)=>json('/functions/v1/hub-reminders',{method:'POST',body:JSON.stringify(body)})};})();
 
