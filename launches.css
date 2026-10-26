@@ -16,3 +16,5 @@ html[data-theme=dark] #launches{--pl-accent:#e5ece9;--pl-gold:#b9a477;--pl-soft:
 @media(prefers-reduced-motion:reduce){.pl-card .pl-photo-button img,.pl-summary-card{transition:none}.pl-card:hover .pl-photo-button img{transform:none}}
 
 #launches .pl-filter-menu{border:0;margin:0;padding:0;background:transparent}#launches .pl-filter-menu>summary{margin:0}#launches .pl-card-media button:focus-visible,#launches .pl-title-button:focus-visible,#launches .pl-watch:focus-visible{outline:2px solid var(--pl-gold);outline-offset:-3px}
+
+.pl-detail-facts strong{display:block;margin:8px 0;font-size:18px;line-height:1.5}.pl-detail-facts .pl-source{display:inline-block;margin-top:6px;font-size:13px}.pl-detail-facts .smallnote{margin:6px 0 0}.pl-card-facts dd{font-weight:600}
