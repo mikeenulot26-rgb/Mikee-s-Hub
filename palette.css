@@ -1,5 +1,5 @@
 /* White and pastel yellow workspace. Theme tokens stay separate from brand artwork. */
-:root,html:not([data-theme=dark]){color-scheme:light;--ink:#29271f;--muted:#706b5c;--line:#e9e5d9;--paper:#fcfbf7;--surface:#fff;--elevated:#f7f3e7;--green:#705a16;--teal:#705a16;--hub-yellow:#f8e89c;--hub-yellow-hover:#f1dc7b;--hub-yellow-soft:#fff8da;--hub-yellow-ink:#3d3317;--shadow:0 8px 28px #66551b08}
+:root,html:not([data-theme=dark]){color-scheme:light;--ink:#625c4c;--muted:#756f60;--line:#e9e5d9;--paper:#fcfbf7;--surface:#fff;--elevated:#f7f3e7;--green:#705a16;--teal:#705a16;--hub-yellow:#f8e89c;--hub-yellow-hover:#f1dc7b;--hub-yellow-soft:#fff8da;--hub-yellow-ink:#65572e;--shadow:0 8px 28px #66551b08}
 html[data-theme=dark]{color-scheme:dark;--ink:#f5f1e6;--muted:#beb6a3;--line:#444033;--paper:#191916;--surface:#23231f;--elevated:#302e25;--green:#f1dc87;--teal:#f1dc87;--hub-yellow:#ebd484;--hub-yellow-hover:#f5e2a2;--hub-yellow-soft:#383222;--hub-yellow-ink:#342b13;--shadow:0 8px 28px #0002}
 html body{background:var(--paper);color:var(--ink)}
 html .workspace-topbar,html #authGate{background:var(--paper)}
@@ -28,3 +28,9 @@ html input[type=checkbox],html input[type=range]{accent-color:var(--green)}
 /* Consistent monochrome navigation icons; inherit light/dark and active colours. */
 .workspace-sidebar .sidebar-menu-icon{display:inline-flex;align-items:center;justify-content:center;flex:0 0 22px;width:22px;height:24px}
 .workspace-sidebar .sidebar-menu-icon svg{display:block;width:21px;height:21px}
+
+/* Softer light-theme typography and warm accent controls. */
+html:not([data-theme=dark]) :is(h1,h2,h3,.brandnav b,#signOut,#dayProgressNumber){color:var(--ink)}
+html .assistant-launch,html .assistant-controls #asSend{background:var(--hub-yellow);color:var(--hub-yellow-ink);border-color:var(--line);box-shadow:0 8px 24px #a98b2420}
+html .assistant-launch:hover{background:var(--hub-yellow-hover);box-shadow:0 12px 28px #a98b2428}
+html:not([data-theme=dark]) .assistant-message.user{background:var(--hub-yellow-soft);color:var(--ink)}
