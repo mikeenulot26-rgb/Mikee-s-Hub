@@ -7,8 +7,25 @@ function plFact(r,k){return r.data.facts?.[k]?.value||''}
 function plLabel(k){return k.replace(/([A-Z])/g,' $1').replace(/^./,s=>s.toUpperCase())}
 function plLink(url,label){const a=el('a','pl-source',label);try{if(new URL(url).protocol==='https:')a.href=url}catch{}a.target='_blank';a.rel='noopener noreferrer';return a}
 async function plImage(r,img){try{let url=PL.images.get(r.data.image.path);if(!url){url=await Cloud.launches.image(r.data.image.path);PL.images.set(r.data.image.path,url);setTimeout(()=>PL.images.delete(r.data.image.path),3300000)}img.src=url;img.onerror=()=>{const card=img.closest('.pl-card');if(card){card.replaceChildren(el('p','pl-coverage','Project image needs review · '+r.data.project),plButton('Source status',()=>plChangeView('Sources')))}else img.remove();toast('A cached image could not load. Review its project source.')}}catch{img.remove()}}
-async function openLaunches(){PL.view='All Launches';if(!PL.autoChecked){$('launches').replaceChildren(el('p','pl-empty','Checking verified launches…'));PL.autoChecked=true;try{await Cloud.launches.api({action:'revalidate'});PL.loaded=false}catch(e){PL.autoChecked=false;toast('Verification refresh could not finish: '+e.message)}}if(!PL.loaded){$('launches').replaceChildren(el('p','pl-empty','Loading saved launches…'));await plLoad()}plRender()}
-async function plLoad(){try{const [records,sources,digests]=await Promise.all([Cloud.launches.list(),Cloud.launches.sources(),Cloud.launches.digests()]);Object.assign(PL,{records,sources,digests,loaded:true});if(typeof renderNotificationDropdown==='function')renderNotificationDropdown()}catch(e){$('launches').replaceChildren(el('p','pl-empty','Launch records could not be retrieved. '+e.message),plButton('Retry',openLaunches));throw e}}
+async function openLaunches(){
+ PL.view='All Launches';
+ if(!PL.loaded){$('launches').replaceChildren(el('p','pl-empty','Loading saved launches…'));try{await plLoad()}catch{return}}
+ plRender();
+ // Saved verified records render before any external source research starts.
+ if(!PL.autoChecked){PL.autoChecked=true;const owner=Cloud.assistant.userId();
+  PL.verifying=Promise.resolve().then(()=>Cloud.launches.api({action:'revalidate'})).then(async()=>{
+   if(Cloud.assistant.userId()!==owner)return;
+   await plLoad();if(!$('launches').hidden&&!$('launchDialog')?.open)plRender();
+  }).catch(e=>{if(Cloud.assistant.userId()===owner&&!$('launches').hidden)toast('Saved launches are available. Background verification could not finish: '+e.message)}).finally(()=>{PL.verifying=null});
+ }
+}
+let plLoadFlight=null;
+function plLoad(){
+ if(plLoadFlight)return plLoadFlight;
+ const owner=Cloud.assistant.userId();
+ plLoadFlight=(async()=>{try{const [records,sources,digests]=await Promise.all([Cloud.launches.list(),Cloud.launches.sources(),Cloud.launches.digests()]);if(Cloud.assistant.userId()!==owner)return;Object.assign(PL,{records,sources,digests,loaded:true});if(typeof renderNotificationDropdown==='function')renderNotificationDropdown()}catch(e){if(!PL.loaded)$('launches').replaceChildren(el('p','pl-empty','Launch records could not be retrieved. '+e.message),plButton('Retry',openLaunches));throw e}finally{plLoadFlight=null}})();
+ return plLoadFlight;
+}
 async function plRefresh(){await plLoad();plRender()}
 function plSelect(label,values,key){const l=el('label','',label),s=el('select');s.setAttribute('aria-label',label);s.add(new Option('All '+label.toLowerCase(),''));for(const value of values)s.add(new Option(value,value));s.value=PL[key];s.onchange=()=>{PL[key]=s.value;plRender()};l.append(s);return l}
 function plChangeView(view){PL.view=view;plRender()}
