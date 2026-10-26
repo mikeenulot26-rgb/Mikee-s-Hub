@@ -1,23 +1,24 @@
 (function(root){
 const shift=(day,n)=>{const d=new Date(day+'T12:00:00Z');d.setUTCDate(d.getUTCDate()+n);return d.toISOString().slice(0,10)};
 const validDate=d=>/^\d{4}-\d{2}-\d{2}$/.test(d||'')&&!Number.isNaN(new Date(d+'T12:00Z').getTime())&&new Date(d+'T12:00Z').toISOString().slice(0,10)===d;
-function renewalDates(start){if(!validDate(start))return null;const actual=shift(start,27),weekday=new Date(actual+'T12:00Z').getUTCDay();return {actual,scheduled:shift(actual,weekday===6?-1:weekday===0?-2:0)}}
+function renewalDates(start){if(!validDate(start))return null;return {actual:shift(start,27),scheduled:shift(start,25)}}
 function reconcile(pf,h){
 h.tasks ||= [];let changed=false;
-for(const l of pf.listings||[]){const dates=l.status==='Active'?renewalDates(l.cycleStart||l.published):null,id=dates?'pf-renew:'+l.id+':'+(l.cycleStart||l.published):'';
+for(const l of pf.listings||[]){const dates=l.status==='Active'?renewalDates(l.cycleStart||l.published):null,id=dates?'pf-renew:'+l.id+':'+(l.cycleStart||l.published)+(l.cycleRevision?':'+l.cycleRevision:''):'';
 for(const t of h.tasks.filter(t=>t.pfListingId===l.id&&!t.done))if(!dates||t.id!==id){Object.assign(t,{done:true,cancelled:true,status:'Cancelled'});changed=true}
 if(!dates)continue;
-const values={title:'Renew listing — '+l.name+' — '+l.reference,due:dates.scheduled,time:'',category:'Listing renewal',assigned:l.agentName||'Mikee',priority:'High',pfListingId:l.id,actualRenewal:dates.actual,suppressReminders:true};
+const values={title:'Republish listing — '+l.name+' — '+l.reference,due:dates.scheduled,time:'',category:'Listing renewal',assigned:l.agentName||'',priority:'High',pfListingId:l.id,actualRenewal:dates.actual,suppressReminders:true};
 const existing=h.tasks.find(t=>t.id===id);
 if(!existing){h.tasks.push({...values,id,done:false,status:'To Do',created:new Date().toISOString()});changed=true}else if(!existing.done){for(const [key,value]of Object.entries(values))if(existing[key]!==value){existing[key]=value;changed=true}}
 }return changed;
 }
+function republish(l,reference,date,today,listings){reference=String(reference||'').trim();const errors=listingErrors({...l,reference},listings,l.id);if(errors.reference)throw Error(errors.reference);if(!validDate(date)||date>today||date<(l.cycleStart||l.published))throw Error('Choose an actual republication date within the current cycle and no later than today.');if((l.history||[]).some(h=>h.date===date&&String(h.reference||l.reference).trim().toLowerCase()===reference.toLowerCase()))throw Error('This republication date and reference have already been recorded.');if(l.status!=='Active')throw Error('Reactivate this listing with a publication date first.');const dates=renewalDates(l.cycleStart||l.published);return {...l,reference,published:date,cycleStart:date,cycleRevision:(l.cycleRevision||0)+1,updated:new Date().toISOString(),history:[...(l.history||[]),{date,previousReference:l.reference,reference,previousPublished:l.published,previousCycleStart:l.cycleStart||l.published,actual:dates?.actual,scheduled:dates?.scheduled,recordedAt:new Date().toISOString()}]}}
 function listingErrors(l,listings,ownId){
 const errors={};if(!l.name?.trim())errors.name='Enter a property name or location.';if(!l.reference?.trim())errors.reference='Enter a listing reference.';
-if(listings.some(x=>(!ownId||x.id!==ownId)&&x.reference.trim().toLowerCase()===l.reference?.trim().toLowerCase()))errors.reference='This reference already exists. Edit the existing record.';
+if(listings.some(x=>(!ownId||x.id!==ownId)&&[x.reference,...(x.history||[]).flatMap(h=>[h.reference,h.previousReference])].filter(Boolean).some(ref=>ref.trim().toLowerCase()===l.reference?.trim().toLowerCase())))errors.reference='This reference already exists. Edit the existing record.';
 if(l.published&&!validDate(l.published))errors.published='Use a valid publication date.';
 if(!['Active','Rented','Sold','Unpublished'].includes(l.status))errors.status='Choose a listing status.';
-if(l.link){try{const url=new URL(l.link);if(url.protocol!=='https:'||!['propertyfinder.ae','www.propertyfinder.ae'].includes(url.hostname)||url.username||url.password||url.port)errors.link='Use a public https://www.propertyfinder.ae listing link.'}catch{errors.link='Enter a valid public listing URL.'}}
+if(l.link){try{const url=new URL(l.link);if(url.protocol!=='https:'||url.username||url.password||url.port)errors.link='Use a public HTTPS listing link.'}catch{errors.link='Enter a valid public listing URL.'}}
 return errors;
 }
 function audit(input){
@@ -87,6 +88,6 @@ function description(input){
  return output.join('\n').replace(/both end.users and investors/gi,'interested buyers');
 }
 
-root.PFCore={shift,validDate,renewalDates,reconcile,listingErrors,audit,titles,description};
+root.PFCore={republish,shift,validDate,renewalDates,reconcile,listingErrors,audit,titles,description};
 })(typeof window==='undefined'?globalThis:window);
 if(typeof module!=='undefined'&&module.exports)module.exports=globalThis.PFCore;
