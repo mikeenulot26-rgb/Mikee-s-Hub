@@ -14,7 +14,7 @@ Read-only production inventory before implementation: 5 property folders, 74 pho
 - Large centered mouse/touch reposition editor, grid, keyboard movement, preview-first/original loading, save/cancel/outside click, retained enhancement settings, immutable versions and bounded original cache (3).
 - Folder-local order numbers, optimistic DOM moves, per-folder debounced save queues, failure reconciliation, stable image URLs and ZIP ordering.
 - Three export choices, individual/selected ZIP, sanitized single property directory, simple numeric prefixes and return to folder overview after download initiation. ZIP byte contents verified separately from browser delivery.
-- Natural local enhancement review, low-resolution and heuristic soft-focus/low-texture warning. It does not reconstruct missing detail or use paid AI.
+- Natural local enhancement review using a same-origin background worker, low-resolution and heuristic soft-focus/low-texture warning. It does not reconstruct missing detail or use paid AI.
 - Confirmed deletion removes a card optimistically, rolls back failed metadata removal, and retains persistent retry metadata if private binary cleanup fails.
 - Listings copy-reference control, manual agent name, name/reference/due/recent sorting, existing filters, partial-success bulk entry, duplicate references including another listing's retained history, publication/republication history and actual-date/reference republication form.
 - Tasks now use publication +25 days; deadline remains publication +27 days. The former rule used day 28, brought forward to Friday for weekends. Completed task history is preserved; pending tasks reconcile on authenticated workspace loading/saving. Same-day cycle changes have distinct cycle revisions. All views continue to use existing task/listing IDs.
@@ -23,7 +23,7 @@ Read-only production inventory before implementation: 5 property folders, 74 pho
 
 The existing private marketing bucket was raised from 25 MiB to 50 MiB; it remains private and restricted to image/jpeg, image/png and image/webp. Supabase Free cannot support 100 MB individual files. Global account restrictions may impose a lower effective limit and are reported as upload failures. No paid plan, new account or new storage service was enabled.
 
-Published Free allowances: 1 GB storage, 500 MB database, 5 GB egress plus 5 GB cached egress; inactivity restrictions remain. Actual inventory at inspection: 147 files, 47,657,862 stored bytes across the project's buckets. This is not a claim of unlimited capacity or measured billing reduction. Browser decoding rejects images above 50 megapixels; original-size enhancement of large images may require a desktop. Old immutable versions remain until their photo is explicitly deleted.
+Published Free allowances: 1 GB storage, 500 MB database, 5 GB egress plus 5 GB cached egress; inactivity restrictions remain. Actual inventory at inspection: 147 files, 47,657,862 stored bytes across the project's buckets. This is not a claim of unlimited capacity or measured billing reduction. Browser decoding rejects images above 50 megapixels; iPhone/iPad original-size enhancement is limited to 16 megapixels to protect memory. Larger originals still support resized exports. Old immutable versions remain until their photo is explicitly deleted.
 
 Official references:
 - https://supabase.com/docs/guides/storage/uploads/file-limits
@@ -32,7 +32,7 @@ Official references:
 
 ## Verification and limits
 
-143 automated tests pass. Automated checks cover existing modules plus MIME signatures, the 50 MB boundary, safe names, contiguous ordering, date/year/leap boundaries, duplicate references, retained republication history, inactive/undated task reconciliation, authenticated small upload/TUS request shapes, retry-independent original upload deduplication, and deletion/cleanup failure reconciliation.
+144 automated tests pass. Automated checks cover existing modules plus MIME signatures, the 50 MB boundary, safe names, contiguous ordering, date/year/leap boundaries, duplicate references, retained republication history, inactive/undated task reconciliation, authenticated small upload/TUS request shapes, retry-independent original upload deduplication, and deletion/cleanup failure reconciliation.
 
 Desktop Chromium browser checks used isolated fixture records and IndexedDB, with mocked cloud persistence: multi-file processing, EXIF orientation (1200x800 orientation-6 source correctly decoded as 800x1200), immediate cards, reposition popup and keyboard save, order persistence after reload, unchanged image URLs during order changes, ZIP directory/order/800x600 JPEG contents, and preservation of form input after a simulated failed save. A representative reorder performed one metadata save, zero additional image reads and zero uploads. The isolated HTTP preview uses fixture-only crypto stand-ins; production uses native HTTPS SHA-256.
 
