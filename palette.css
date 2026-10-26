@@ -1,0 +1,26 @@
+/* White and pastel yellow workspace. Theme tokens stay separate from brand artwork. */
+:root,html:not([data-theme=dark]){color-scheme:light;--ink:#29271f;--muted:#706b5c;--line:#e9e5d9;--paper:#fcfbf7;--surface:#fff;--elevated:#f7f3e7;--green:#705a16;--teal:#705a16;--hub-yellow:#f8e89c;--hub-yellow-hover:#f1dc7b;--hub-yellow-soft:#fff8da;--hub-yellow-ink:#3d3317;--shadow:0 8px 28px #66551b08}
+html[data-theme=dark]{color-scheme:dark;--ink:#f5f1e6;--muted:#beb6a3;--line:#444033;--paper:#191916;--surface:#23231f;--elevated:#302e25;--green:#f1dc87;--teal:#f1dc87;--hub-yellow:#ebd484;--hub-yellow-hover:#f5e2a2;--hub-yellow-soft:#383222;--hub-yellow-ink:#342b13;--shadow:0 8px 28px #0002}
+html body{background:var(--paper);color:var(--ink)}
+html .workspace-topbar,html #authGate{background:var(--paper)}
+html body>.workspace-sidebar.topnav{background:var(--surface)}
+html .workspace-sidebar .navlinks>.nav.active{background:var(--hub-yellow);color:var(--hub-yellow-ink);box-shadow:inset 3px 0 #a9892e}
+html .workspace-sidebar .navlinks>.nav:hover:not(.active){background:var(--hub-yellow-soft);color:var(--ink)}
+html .brandicon,html .avatar{background:var(--hub-yellow);color:var(--hub-yellow-ink)}
+html .primary,html button.primary,html .filebutton.primary{background:var(--hub-yellow);border-color:var(--hub-yellow);color:var(--hub-yellow-ink)}
+html .primary:hover,html button.primary:hover{background:var(--hub-yellow-hover);border-color:var(--hub-yellow-hover);color:var(--hub-yellow-ink)}
+html .secondary:hover,html .iconbtn:hover{background:var(--hub-yellow-soft);color:var(--ink)}
+html .myday-hero{background:var(--hub-yellow-soft);border:1px solid var(--line);color:var(--ink)}
+html .myday-hero h2,html .myday-hero p,html .myday-hero .eyebrow{color:var(--ink)}
+html .monthgrid .today,html .monthgrid .selecteddate{background:var(--hub-yellow);color:var(--hub-yellow-ink)}
+html .monthgrid .hasEvent:after{background:var(--green)}
+html:not([data-theme=dark]) .scheduleblock.pastel0{background:#fff3c0!important}
+html:not([data-theme=dark]) .scheduleblock.pastel1{background:#fff8df!important}
+html:not([data-theme=dark]) .scheduleblock.pastel2{background:#f7edcb!important}
+html[data-theme=dark] .scheduleblock.pastel0,html[data-theme=dark] .scheduleblock.pastel1,html[data-theme=dark] .scheduleblock.pastel2{background:var(--hub-yellow-soft)!important}
+html .notice{background:var(--hub-yellow-soft);color:var(--muted)}
+html .eyebrow{color:var(--green)}
+html #launches{--pl-accent:var(--green);--pl-gold:#aa8b30;--pl-soft:var(--hub-yellow-soft)}
+html #launches .pl-tabs button.active{background:var(--hub-yellow)!important;color:var(--hub-yellow-ink)!important}
+html :is(button,a,input,select,textarea,summary):focus-visible{outline:3px solid #94741f;outline-offset:3px}
+html input[type=checkbox],html input[type=range]{accent-color:var(--green)}
