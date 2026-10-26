@@ -8,7 +8,7 @@ Private owner-only extension of Mikee’s Hub. Frontend is buildless, uses the e
 - `hub_launch_sources`: last check, selected-page coverage and compact issues.
 - `hub_launch_digests`: immutable daily fact snapshots, Dubai day and confirmed update count.
 - `hub_launch_preferences`: opt-in launch digest push.
-- Private `launch-images` bucket: source image signature, dimensions, size and SHA-256 checked; signed owner URLs, cover cropping. Human review must confirm that the actual cached image depicts the project before publication. No generic fallback imagery.
+- Private `launch-images` bucket: source image signature, dimensions, size and SHA-256 checked; signed owner URLs, cover cropping. Automatic verification requires an official project page, a matching project heading/URL, an identified UAE location and a cached image explicitly labelled with the project name on that page. Unresolved images require human review. No generic fallback imagery.
 - Follow-up tasks use `state.hub.tasks`; persistence, task management, calendar and reminders remain existing Hub systems. No separate task store.
 - Marketing drafts use `state.marketingTools.posts`, cached source images imported using existing media helpers, selected confirmed facts and attribution. Preview/editor opens; nothing is sent or published. Drafts cannot use Download again to bypass review.
 - Launch updates/digest entries extend the existing notification dropdown and its Clear behaviour. Optional digest push uses existing subscriptions, private VAPID configuration, delivery ledger and service worker.
@@ -19,7 +19,7 @@ Supabase Edge Function `property-launches` authenticates owner requests with the
 
 Selected sources: Emaar latest launches, Aldar news, Dubai Properties media, The National property and WAM business. Each run processes a bounded rotating subset of candidate links, not comprehensive UAE coverage. Public pages requiring JavaScript, access checks or unavailable imagery are reported for review. No paywall bypass, paid search service or AI API. Unknown fields remain absent. Browser HTTP requests and image redirects are restricted to explicit HTTPS source/CDN hosts, streamed size limits and timeouts.
 
-The deterministic parser extracts explicit supported fields and sends every new item to review. It does not autonomously verify all amenities, availability, brochure contents or complex instalment tables. The review editor supports adding these with attribution. Additional project sources can enrich an existing release; personal data is never overwritten. Contradictory claims retain source-specific values and history. Explicit complete payment ratios are shortened; incomplete schedules are not guessed.
+The deterministic parser extracts explicit supported fields. Official project releases passing identity, image, conflict and duplicate checks are published automatically. Only unresolved cases stay in Review. It does not autonomously verify all amenities, availability, brochure contents or complex instalment tables. Missing optional facts do not block an otherwise verified release. The review editor supports adding these with attribution. Additional project sources can enrich an existing release; personal data is never overwritten. Contradictory claims retain source-specific values and history. Explicit complete payment ratios are shortened; incomplete schedules are not guessed.
 
 ## Verification
 
