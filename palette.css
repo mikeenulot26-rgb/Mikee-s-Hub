@@ -24,3 +24,7 @@ html #launches{--pl-accent:var(--green);--pl-gold:#aa8b30;--pl-soft:var(--hub-ye
 html #launches .pl-tabs button.active{background:var(--hub-yellow)!important;color:var(--hub-yellow-ink)!important}
 html :is(button,a,input,select,textarea,summary):focus-visible{outline:3px solid #94741f;outline-offset:3px}
 html input[type=checkbox],html input[type=range]{accent-color:var(--green)}
+
+/* Consistent monochrome navigation icons; inherit light/dark and active colours. */
+.workspace-sidebar .sidebar-menu-icon{display:inline-flex;align-items:center;justify-content:center;flex:0 0 22px;width:22px;height:24px}
+.workspace-sidebar .sidebar-menu-icon svg{display:block;width:21px;height:21px}
