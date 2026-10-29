@@ -6,6 +6,7 @@
  const metaTitle=clean(document.querySelector('meta[property="og:title"]')?.getAttribute('content')||document.querySelector('title')?.textContent);
  let h=clean((heading&&matches(heading.textContent)?heading.textContent:matches(metaTitle)?metaTitle:heading?.textContent)||metaTitle).split(/\s*[|:]\s*/)[0].replace(/\s*\([^)]*\)\s*$/,'').slice(0,220);
  if(!h||/access denied|just a moment|captcha|latest projects|news and media|^overall$|^building works$/i.test(h))throw Error('Page has no specific project identity');
+ const titleName=metaTitle.split(/\s*[|–—]\s*|\s+-\s+/)[0].replace(/\s+by\s+Beyond$/i,'').trim();if(s.id==='beyond'&&matches(titleName)&&titleName.length<h.length)h=titleName;
  const main=heading?.closest('main')||(s.official?document.querySelector('main'):document.querySelector('article'))||document.querySelector('main')||document.querySelector('article')||document.body;
  for(const el of main.querySelectorAll('script,style,nav,footer,form,[role="navigation"],[id*="search-result"],[id*="search-results"],[id*="footer"]'))el.remove();
  for(const el of main.querySelectorAll('header'))if(el.querySelector('nav'))el.remove();

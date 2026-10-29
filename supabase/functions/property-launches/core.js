@@ -29,6 +29,8 @@ function publicationDecision(data,peers=[],id=''){
  return{verified:reasons.length===0,reasons};
 }
 function visible(record,view,today=day()){if(record.archived)return view==='Archive'&&record.data.publication==='published'&&record.data.image?.verified===true;if(view==='Archive')return false;if(view==='Review')return record.data.publication!=='published';if(record.data.publication!=='published'||!record.data.image?.verified)return false;const f=record.data.facts||{};if(view==='My Watchlist')return record.watchlisted;if(view==='Latest Launches'){const d=f.announcementDate?.value;return validDate(d)&&d<=today&&(Date.parse(today)-Date.parse(d))/86400000<=30}if(view==='Upcoming Releases')return f.salesDate?.value>today||record.data.comingSoon===true;return true}
-const api={fields,day,canonical,norm,key,payment,validDate,merge,imageInfo,hasConfirmedUpdate,needsRecheck,publicationDecision,visible};if(typeof module==='object'&&module.exports)module.exports=api;else root.LaunchCore=api;
+// Round-robin an already sorted result set so one developer cannot occupy the whole opening screen.
+function diversify(rows){const groups=new Map();for(const r of rows){const key=norm(r.data.developer);if(!groups.has(key))groups.set(key,[]);groups.get(key).push(r)}const buckets=[...groups.entries()].sort(([a],[b])=>a.localeCompare(b)).map(([,v])=>v),out=[];for(let i=0;out.length<rows.length;i++)for(const group of buckets)if(group[i])out.push(group[i]);return out}
+const api={diversify,fields,day,canonical,norm,key,payment,validDate,merge,imageInfo,hasConfirmedUpdate,needsRecheck,publicationDecision,visible};if(typeof module==='object'&&module.exports)module.exports=api;else root.LaunchCore=api;
 })(globalThis);
 
