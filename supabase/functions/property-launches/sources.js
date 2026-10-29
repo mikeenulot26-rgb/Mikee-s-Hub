@@ -20,7 +20,8 @@ const sources=developers.map(([id,name,url,emirates])=>({id,name,developer:name,
  {id:'wam',name:'Emirates News Agency',url:'https://www.wam.ae/en/business',official:false}
 ]);
 function sourceFor(url){const host=new URL(url).hostname.replace(/^www\./,'');return sources.find(s=>{const domain=new URL(s.url).hostname.replace(/^www\./,'');return host===domain||host.endsWith('.'+domain)})}
-function projectPage(url){return /\/(?:properties|property|projects|project|residential-projects|developments|real-estate)\/[^/]+/i.test(new URL(url).pathname)}
-function candidate(url,title,source){try{const u=new URL(url);if(!sourceFor(url)||sourceFor(url).id!==source.id)return false;if(/\.(?:pdf|jpg|png|webp|mp4)$/i.test(u.pathname)||/contact|careers|privacy|mortgage|handover|construction-progress|about-us/i.test(u.pathname))return false;return projectPage(url)||/launch|unveil|new (?:phase|tower|project|residen)|sales release/i.test(title)}catch{return false}}
+function projectPage(url){const p=new URL(url).pathname.replace(/\/+$/,'');if(/\/(?:index\.html|en|projects|properties|real-estate|property-for-sale)$/i.test(p))return false;return /\/(?:properties|property|projects|project|residential-projects|developments|real-estate)\/[^/]+/i.test(p)}
+function candidate(url,title,source){try{const u=new URL(url);if(!sourceFor(url)||sourceFor(url).id!==source.id)return false;if(/\.(?:pdf|jpg|png|webp|mp4|svg)$/i.test(u.pathname)||/contact|careers|privacy|mortgage|handover|construction-progress|about-us/i.test(u.pathname))return false;if(!source.official)return /launch|unveil|new (?:phase|tower|project|residen)|sales release/i.test(title);return projectPage(url)}catch{return false}}
 const api={sources,sourceFor,projectPage,candidate};if(typeof module==='object'&&module.exports)module.exports=api;else root.LaunchSources=api;
 })(globalThis);
+
