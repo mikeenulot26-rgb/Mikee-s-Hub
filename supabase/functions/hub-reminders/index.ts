@@ -14,7 +14,7 @@ function ensureRecurringTasks(h:any,today:string){
 
 const base=Deno.env.get("SUPABASE_URL")!;
 const service=Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
-const origins=new Set(["https://mikees-hub-mikeenulot26-6691s-projects.vercel.app","https://croswell-marketing-studio.vercel.app"]);
+const origins=new Set(['https://mikees-hub.vercel.app',"https://mikees-hub-mikeenulot26-6691s-projects.vercel.app","https://croswell-marketing-studio.vercel.app"]);
 async function db(path:string,method="GET",body?:unknown,prefer?:string){const r=await fetch(base+"/rest/v1/"+path,{method,headers:{apikey:service,Authorization:"Bearer "+service,"Content-Type":"application/json",...(prefer?{Prefer:prefer}:{})},body:body===undefined?undefined:JSON.stringify(body)});if(!r.ok)throw Error("Database operation failed "+r.status);const text=await r.text();return text?JSON.parse(text):null}
 function safeEndpoint(endpoint:string){try{const u=new URL(endpoint);return u.protocol==="https:"&&!u.username&&!u.password&&(!u.port||u.port==="443")&&(u.hostname==="web.push.apple.com"||u.hostname.endsWith(".push.apple.com")||u.hostname==="fcm.googleapis.com"||u.hostname==="updates.push.services.mozilla.com"||u.hostname.endsWith(".notify.windows.com"));}catch{return false}}
 async function send(subscription:any,payload:any,config:any){if(!safeEndpoint(subscription.endpoint))throw Error("Unsupported push endpoint");const req=webpush.generateRequestDetails(subscription,JSON.stringify(payload),{TTL:3600,urgency:"high",vapidDetails:{subject:"https://mikees-hub-mikeenulot26-6691s-projects.vercel.app",publicKey:config.publicKey,privateKey:config.privateKey}});const controller=new AbortController();const timer=setTimeout(()=>controller.abort(),8000);try{const r=await fetch(req.endpoint,{method:req.method,headers:req.headers,body:new Uint8Array(req.body),signal:controller.signal});return r.status}finally{clearTimeout(timer)}}
@@ -95,4 +95,3 @@ try{
  return reply({checked,sent,failed});
 }catch(e){console.error("Reminder worker error:",e instanceof Error?e.message:"unknown");return reply({error:"Reminder service could not complete the request."},500)}
 });
-

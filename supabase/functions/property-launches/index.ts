@@ -8,7 +8,7 @@ import './core.js';
 import './sources.js';
 import './parser.js';
 const C=(globalThis as any).LaunchCore,base=Deno.env.get('SUPABASE_URL')!,secret=Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
-const origins=new Set(['https://mikees-hub-mikeenulot26-6691s-projects.vercel.app','https://croswell-marketing-studio.vercel.app']);
+const origins=new Set(['https://mikees-hub.vercel.app','https://mikees-hub-mikeenulot26-6691s-projects.vercel.app','https://croswell-marketing-studio.vercel.app']);
 const S=(globalThis as any).LaunchSources,sources=S.sources;
 const domains=[...new Set(sources.map((s:any)=>new URL(s.url).hostname.replace(/^www\./,'')))];
 const imageDomains=[...domains,'binghattiweb.imgix.net','images1.cmp.optimizely.com','images2.cmp.optimizely.com','images3.cmp.optimizely.com','images4.cmp.optimizely.com','cdn.aldar.com','cdn.emaar.com','cdn.properties.emaar.com','cdn.sanity.io','images.ctfassets.net','cloudfront.net','cdn.cookielaw.org','cdn.prod.website-files.com','assets-global.website-files.com'];
